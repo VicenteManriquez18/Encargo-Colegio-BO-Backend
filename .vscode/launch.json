@@ -1,0 +1,45 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-ApigatewayApplication<apigateway>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.colegio.apigateway.ApigatewayApplication",
+            "projectName": "apigateway",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ServicioMatriculaApplication<servicio-matricula>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.proyecto.ColegioBackend.ServicioMatriculaApplication",
+            "projectName": "servicio-matricula",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ColegioApplication<colegipo>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.proyecto.ColegioBackend.ColegioApplication",
+            "projectName": "colegipo",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-AsistenciaApplication<servicio-asistencia>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.proyecto.ColegioBackend.AsistenciaApplication",
+            "projectName": "servicio-asistencia",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
