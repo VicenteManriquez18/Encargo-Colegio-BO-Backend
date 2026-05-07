@@ -22,6 +22,32 @@
 POST /api/auth/register
 ```
 
+**Body (JSON):**
+```json
+{
+  "correo": "usuario@example.com",
+  "password": "password123",
+  "rol": "ESTUDIANTE"
+}
+```
+
+---
+
+### Login (Obtener JWT)
+
+```http
+POST /api/auth/login
+```
+
+**Body (JSON):**
+```json
+{
+  "correo": "usuario@example.com",
+  "password": "password123"
+}
+```
+
+---
 
 ## Gestión de Usuarios
 
@@ -31,11 +57,32 @@ POST /api/auth/register
 GET /api/usuarios
 ```
 
+---
 
 ### Obtener Usuario por ID
 
 ```http
 GET /api/usuarios/{id}
+```
+
+Ejemplo: `GET /api/usuarios/1`
+
+---
+
+### Crear Nuevo Usuario
+
+```http
+POST /api/usuarios
+```
+
+**Body (JSON):**
+```json
+{
+  "nombre": "Carlos López",
+  "correo": "carlos@example.com",
+  "password": "password123",
+  "rol": "ESTUDIANTE"
+}
 ```
 
 ---
@@ -46,7 +93,18 @@ GET /api/usuarios/{id}
 PUT /api/usuarios/{id}
 ```
 
+Ejemplo: `PUT /api/usuarios/1`
 
+**Body (JSON):**
+```json
+{
+  "nombre": "Juan Pérez Actualizado",
+  "correo": "juan.nuevo@example.com",
+  "rol": "PROFESOR"
+}
+```
+
+---
 
 ### Eliminar Usuario
 
@@ -54,56 +112,54 @@ PUT /api/usuarios/{id}
 DELETE /api/usuarios/{id}
 ```
 
-----------------------------------------------------------------------------
-
-
-
-## Gestión de Asistencia
-
-### Ver Vista de Asistencia
-
-```http
-GET /api/asistencia/vista
-```
-
+Ejemplo: `DELETE /api/usuarios/1`
 
 ---
 
-### Registrar Asistencia
+## Gestión de Asistencia
+
+### Registrar Asistencia (Automático)
 
 ```http
 POST /api/asistencia/registrar
 ```
 
-
+**Body (JSON):**
+```json
+{
+  "usuarioId": 1
+}
+```
 ---
 
-### Listar Asistencias (Admin)
+### Listar Todas las Asistencias
 
 ```http
-GET /api/asistencia-admin
+GET /api/asistencia
 ```
 
 ---
 
----
-
-### Obtener Asistencia por ID (Admin)
+### Obtener Asistencia por ID
 
 ```http
-GET /api/asistencia-admin/{id}
+GET /api/asistencia/{id}
 ```
 
 ---
 
-### Eliminar Asistencia (Admin)
 
-```http
-DELETE /api/asistencia-admin/{id}
 ```
 
-----------------------------------------------------------------------------
+```
 
+### Eliminar Asistencia
+
+```http
+DELETE /api/asistencia/{id}
+```
+
+---
 
 ## Gestión de Matrícula/Estudiantes
 
@@ -121,6 +177,8 @@ GET /api/matricula/estudiantes
 GET /api/matricula/estudiantes/curso/{curso}
 ```
 
+Ejemplo: `GET /api/matricula/estudiantes/curso/1A`
+
 ---
 
 ### Registrar Matrícula Completa
@@ -129,11 +187,30 @@ GET /api/matricula/estudiantes/curso/{curso}
 POST /api/matricula/registrar-completo
 ```
 
+**Body (JSON):**
+```json
+{
+  "nombre": "Diego Rodríguez",
+  "apellido": "Rodríguez García",
+  "email": "diego@example.com",
+  "curso": "2A",
+  "grado": "Séptimo",
+  "usuarioId": 3
+}
+```
 
 ---
 
 
+## Stack Tecnológico
 
+- Backend: Spring Boot 3.x
+- Java: 17+
+- Autenticación: JWT
+- Base de Datos: PostgreSQL
+- Build Tool: Maven
+- API Gateway: Spring Cloud Gateway
 
+---
 
 **Última actualización:** 7 de Mayo de 2026
