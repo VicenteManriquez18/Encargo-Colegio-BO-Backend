@@ -210,11 +210,11 @@ POST /api/matricula/registrar-completo
 ```json
 {
   "nombre": "Diego Rodríguez",
-  "apellido": "Rodríguez García",
-  "email": "diego@example.com",
+  "rut": "12345678-9",
+  "fechaNacimiento": "2010-05-15",
   "curso": "2A",
-  "grado": "Séptimo",
-  "usuarioId": 3
+  "usuarioId": 3,
+  "estado": "Activo"
 }
 ```
 
