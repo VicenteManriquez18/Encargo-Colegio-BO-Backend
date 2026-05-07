@@ -118,20 +118,6 @@ Ejemplo: `DELETE /api/usuarios/1`
 
 ## Gestión de Asistencia
 
-### Registrar Asistencia (Automático)
-
-```http
-POST /api/asistencia/registrar
-```
-
-**Body (JSON):**
-```json
-{
-  "usuarioId": 1
-}
-```
----
-
 ### Listar Todas las Asistencias
 
 ```http
@@ -146,18 +132,51 @@ GET /api/asistencia
 GET /api/asistencia/{id}
 ```
 
+Ejemplo: `GET /api/asistencia/2`
+
 ---
 
+### Crear Asistencia
 
+```http
+POST /api/asistencia
 ```
 
+**Body (JSON):**
+```json
+{
+  "usuarioId": 1,
+  "nombreUsuario": "usuario@example.com",
+  "fecha": "2026-05-07T15:24:00"
+}
 ```
+
+---
+
+### Registrar Asistencia (Automático)
+
+```http
+POST /api/asistencia/registrar
+```
+
+**Body (JSON):**
+```json
+{
+  "usuarioId": 1
+}
+```
+
+Nota: Valida que el usuario exista en el servicio de usuarios. Registra automáticamente la fecha y hora actual.
+
+---
 
 ### Eliminar Asistencia
 
 ```http
 DELETE /api/asistencia/{id}
 ```
+
+Ejemplo: `DELETE /api/asistencia/1`
 
 ---
 
@@ -200,7 +219,6 @@ POST /api/matricula/registrar-completo
 ```
 
 ---
-
 
 ## Stack Tecnológico
 
