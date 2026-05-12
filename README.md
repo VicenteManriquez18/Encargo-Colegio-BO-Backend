@@ -190,15 +190,6 @@ GET /api/matricula/estudiantes
 
 ---
 
-### Listar Estudiantes por Curso
-
-```http
-GET /api/matricula/estudiantes/curso/{curso}
-```
-
-Ejemplo: `GET /api/matricula/estudiantes/curso/1A`
-
----
 
 ### Registrar Matrícula Completa
 
