@@ -214,7 +214,7 @@ POST /api/matricula/registrar-completo
 ## Stack Tecnológico
 
 - Backend: Spring Boot 3.x
-- Java: 17+
+- Java: 21
 - Autenticación: JWT
 - Base de Datos: PostgreSQL
 - Build Tool: Maven
