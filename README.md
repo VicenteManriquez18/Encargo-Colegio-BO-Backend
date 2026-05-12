@@ -25,9 +25,9 @@ POST /api/auth/register
 **Body (JSON):**
 ```json
 {
-  "correo": "usuario@example.com",
-  "password": "password123",
-  "rol": "ESTUDIANTE"
+  "correo": "usuario@ejemplo.com",
+  "password": "Password123#",
+  "rol": "Alumno"
 }
 ```
 
