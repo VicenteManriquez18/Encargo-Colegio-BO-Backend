@@ -42,8 +42,8 @@ POST /api/auth/login
 **Body (JSON):**
 ```json
 {
-  "correo": "usuario@example.com",
-  "password": "password123"
+  "correo": "usuario@ejemplo.com",
+  "password": "Password123#"
 }
 ```
 
