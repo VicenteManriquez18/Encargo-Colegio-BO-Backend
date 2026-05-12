@@ -33,8 +33,9 @@ public class EstudianteController {
         }
     }
 
-    @GetMapping("/estudiantes/curso/{curso}")
-    public List<Estudiante> buscarPorCurso(@PathVariable String curso) {
-        return matriculaService.buscarEstudiantesPorCurso(curso);
+    @GetMapping("/estudiantes/rut/{rut}")
+    public ResponseEntity<Estudiante> buscarPorRut(@PathVariable String rut) {
+        Estudiante estudiante = matriculaService.buscarEstudiantePorRut(rut);
+        return estudiante != null ? ResponseEntity.ok(estudiante) : ResponseEntity.notFound().build();
     }
 }

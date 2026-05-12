@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+@SuppressWarnings("null")
 @Service
 public class MatriculaServiceImpl implements EstudianteService {
 
@@ -39,12 +40,13 @@ public class MatriculaServiceImpl implements EstudianteService {
     @Transactional
     public Estudiante registrarMatriculaCompleta(Estudiante estudiante) {
         try {
-            if (estudiante.getApoderado() != null) {
+            Apoderado apoderadoEntrada = estudiante.getApoderado();
+            if (apoderadoEntrada != null) {
                 // Buscamos si el apoderado ya existe por su RUT
-                Optional<Apoderado> apoderadoExistente = apoderadoRepository.findByRut(estudiante.getApoderado().getRut());
+                Optional<Apoderado> apoderadoExistente = apoderadoRepository.findByRut(apoderadoEntrada.getRut());
                 
                 // Si existe lo asignamos, si no, guardamos el nuevo
-                Apoderado apoderado = apoderadoExistente.orElseGet(() -> apoderadoRepository.save(estudiante.getApoderado()));
+                Apoderado apoderado = apoderadoExistente.orElseGet(() -> apoderadoRepository.save(apoderadoEntrada));
                 estudiante.setApoderado(apoderado);
             }
             return estudianteRepository.save(estudiante);
@@ -55,12 +57,23 @@ public class MatriculaServiceImpl implements EstudianteService {
     }
 
     @Override
-    public List<Estudiante> buscarEstudiantesPorCurso(String curso) {
+    public Estudiante buscarPorId(Long id) {
         try {
-            return estudianteRepository.findByCurso(curso);
+            return estudianteRepository.findById(id).orElse(null);
         } catch (Exception e) {
-            logger.error("Error al buscar estudiantes del curso {}: {}", curso, e.getMessage());
-            return Collections.emptyList();
+            logger.error("Error al buscar estudiante con ID {}: {}", id, e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public Estudiante buscarEstudiantePorRut(String rut) {
+        try {
+            // Se asume que el repositorio tiene el método findByRut
+            return estudianteRepository.findByRut(rut).orElse(null);
+        } catch (Exception e) {
+            logger.error("Error al buscar estudiante con RUT {}: {}", rut, e.getMessage());
+            return null;
         }
     }
 }

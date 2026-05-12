@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.proyecto.ColegioBackend.model.Usuario;
 import com.proyecto.ColegioBackend.repository.UsuarioRepository;
 
+@SuppressWarnings("null")
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
 
