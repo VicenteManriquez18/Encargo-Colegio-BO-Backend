@@ -6,12 +6,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.proyecto</groupId>
-    <artifactId>servicio-asistencia</artifactId>
+    <artifactId>servicio-academico</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>Servicio Asistencia</name>
-    <description>Microservicio de Asistencia</description>
+    <name>Servicio Academico</name>
+    <description>Microservicio Academico</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -65,8 +65,15 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>
