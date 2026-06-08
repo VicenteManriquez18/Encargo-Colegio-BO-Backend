@@ -11,6 +11,17 @@ Este es el Backend For Frontend (BFF) o API Gateway del proyecto. Funciona como 
 - Java 17+
 - Spring Cloud Gateway
 - Maven
+- **Resilience4j:** Implementación de Circuit Breaker para tolerancia a fallos.
+- **Actuator:** Monitoreo del estado de salud y métricas de los disyuntores.
+
+## Resiliencia
+El Gateway utiliza Circuit Breakers para todas las rutas. Si un microservicio falla:
+1. El circuito se abre tras un 50% de errores en una ventana de 10 llamadas.
+2. Se redirige la petición a un `FallbackController` interno que devuelve un error 503 amigable.
+
+### Monitoreo del Circuit Breaker
+Puedes verificar el estado de los circuitos accediendo a:
+`GET http://localhost:9090/actuator/health`
 
 ## Instalación y Ejecución
 

@@ -11,6 +11,7 @@ Microservicio encargado de la gestión de usuarios y la autenticación (segurida
 - Java 17+
 - Spring Data JPA
 - PostgreSQL
+- **RabbitMQ:** Productor de eventos para sincronización interna con Matrícula.
 - Autenticación: JWT
 - Build Tool: Maven
 

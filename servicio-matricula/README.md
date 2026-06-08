@@ -10,6 +10,7 @@ Microservicio encargado de la administración de estudiantes, su información pe
 - Spring Boot 3.x
 - Java 17+
 - Spring Data JPA
+- **RabbitMQ:** Mensajería asíncrona para recibir eventos de nuevos usuarios.
 - PostgreSQL
 - Build Tool: Maven
 

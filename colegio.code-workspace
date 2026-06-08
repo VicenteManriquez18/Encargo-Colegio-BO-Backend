@@ -1,0 +1,34 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.project.sourcePaths": [
+      "apigateway/src/main/java",
+      "servicio-usuarios/src/main/java",
+      "servicio-asistencia/src/main/java",
+      "servicio-matricula/src/main/java",
+      "servicio-academico/src/main/java",
+      "servicio-reportes/src/main/java"
+    ],
+    "java.test.sourcePaths": [
+      "apigateway/src/test/java",
+      "servicio-usuarios/src/test/java",
+      "servicio-asistencia/src/test/java",
+      "servicio-matricula/src/test/java",
+      "servicio-academico/src/test/java",
+      "servicio-reportes/src/test/java"
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "redhat.java",
+      "vscjava.vscode-maven",
+      "vmware.vscode-spring-boot"
+    ]
+  }
+}

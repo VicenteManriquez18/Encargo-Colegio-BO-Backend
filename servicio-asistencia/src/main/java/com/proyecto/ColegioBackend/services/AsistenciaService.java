@@ -8,4 +8,5 @@ public interface AsistenciaService {
     Asistencia guardar(Asistencia asistencia);
     Asistencia buscarPorId(Long id);
     void eliminar(Long id);
+    List<Asistencia> listarPorUsuario(Long usuarioId);
 }

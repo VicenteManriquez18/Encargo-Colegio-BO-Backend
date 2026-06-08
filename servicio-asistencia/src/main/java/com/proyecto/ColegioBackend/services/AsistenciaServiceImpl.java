@@ -57,4 +57,14 @@ public class AsistenciaServiceImpl implements AsistenciaService {
             logger.error("Error al eliminar asistencia con ID {}: {}", id, e.getMessage());
         }
     }
+
+    @Override
+    public List<Asistencia> listarPorUsuario(Long usuarioId) {
+        try {
+            return asistenciaRepository.findByUsuarioId(usuarioId);
+        } catch (Exception e) {
+            logger.error("Error al listar asistencias para el usuario {}: {}", usuarioId, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
 }

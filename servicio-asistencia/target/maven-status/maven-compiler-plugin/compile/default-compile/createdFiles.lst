@@ -1,6 +1,4 @@
-com\proyecto\ColegioBackend\controller\AsistenciaRestController.class
 com\proyecto\ColegioBackend\repository\AsistenciaRepository.class
-com\proyecto\ColegioBackend\model\Asistencia$AsistenciaBuilder.class
 com\proyecto\ColegioBackend\services\AsistenciaService.class
 com\proyecto\ColegioBackend\model\Asistencia.class
 com\proyecto\ColegioBackend\services\AsistenciaServiceImpl.class

@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import com.proyecto.ColegioBackend.model.Asistencia;
 import com.proyecto.ColegioBackend.repository.AsistenciaRepository;
 import com.proyecto.ColegioBackend.services.AsistenciaService;
@@ -25,8 +25,8 @@ public class AsistenciaController {
     @Autowired
     private AsistenciaService asistenciaService;
 
-    // Instanciamos RestTemplate para comunicación entre microservicios
-    private final RestTemplate restTemplate = new RestTemplate();
+    // Instanciamos WebClient para comunicación entre microservicios
+    private final WebClient webClient = WebClient.create();
 
     // ==================== GET ====================
     
@@ -64,7 +64,11 @@ public class AsistenciaController {
             // Usamos 127.0.0.1 para evitar problemas de resolución de localhost
             String url = "http://127.0.0.1:8081/api/usuarios/" + usuarioId;
             
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            ResponseEntity<Map> response = webClient.get()
+                .uri(url)
+                .retrieve()
+                .toEntity(Map.class)
+                .block();
             Map<String, Object> usuario = response.getBody();
 
             if (usuario == null || !usuario.containsKey("correo")) {
@@ -85,6 +89,31 @@ public class AsistenciaController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Error al conectar con el servicio de usuarios: " + e.getMessage()));
         }
+    }
+
+    // ==================== GET ALUMNOS DESDE USUARIOS ====================
+
+    @GetMapping("/alumnos")
+    public ResponseEntity<?> obtenerAlumnos(@RequestHeader(value = "Authorization", required = false) String token) {
+        try {
+            String url = "http://127.0.0.1:8081/api/usuarios";
+            WebClient.RequestHeadersSpec<?> request = webClient.get().uri(url);
+            if (token != null) {
+                request = request.header("Authorization", token);
+            }
+            ResponseEntity<List> response = request.retrieve().toEntity(List.class).block();
+            return ResponseEntity.ok(response.getBody());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error al conectar con el servicio de usuarios: " + e.getMessage()));
+        }
+    }
+
+    // ==================== GET BY ALUMNO ====================
+
+    @GetMapping("/alumno/{usuarioId}")
+    public ResponseEntity<List<Asistencia>> buscarPorUsuarioId(@PathVariable Long usuarioId) {
+        return ResponseEntity.ok(asistenciaService.listarPorUsuario(usuarioId));
     }
 
     // ==================== DELETE ====================
