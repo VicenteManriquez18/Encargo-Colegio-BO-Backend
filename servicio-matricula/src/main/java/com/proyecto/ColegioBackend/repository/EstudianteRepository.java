@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EstudianteRepository extends JpaRepository<Estudiante, Long> {
-    List<Estudiante> findByCurso(String curso);
+    List<Estudiante> findByCursoId(Long cursoId);
     Optional<Estudiante> findByRut(String rut);
     Optional<Estudiante> findByUsuarioId(Long usuarioId);
 }

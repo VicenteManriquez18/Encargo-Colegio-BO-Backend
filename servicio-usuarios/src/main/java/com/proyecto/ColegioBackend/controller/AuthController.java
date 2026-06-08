@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import com.proyecto.ColegioBackend.model.Usuario;
 import com.proyecto.ColegioBackend.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import com.proyecto.ColegioBackend.config.RabbitMQConfig;
 
 import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,6 +24,9 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
         String correo = credentials.get("correo");
@@ -36,7 +41,7 @@ public class AuthController {
         
         // Si todo es correcto, obtenemos al usuario y generamos su token real
         Usuario usuario = usuarioOpt.get();
-        String token = generarJwt(usuario.getCorreo(), usuario.getRol());
+        String token = generarJwt(usuario.getId(), usuario.getCorreo(), usuario.getRol());
         
         return ResponseEntity.ok(Map.of("token", token));
     }
@@ -54,6 +59,13 @@ public class AuthController {
             
             Usuario guardado = usuarioRepository.save(nuevoUsuario); // ¡Guardado directo!
             System.out.println("¡ÉXITO! Usuario guardado en BD con ID: " + guardado.getId());
+
+            // Notificar internamente al Servicio Matrícula sobre el nuevo usuario
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, Map.of(
+                "id", guardado.getId(),
+                "correo", guardado.getCorreo(),
+                "rol", guardado.getRol()
+            ));
             
             return ResponseEntity.ok(Map.of("mensaje", "Usuario registrado con éxito", "id", guardado.getId()));
         } catch (DataIntegrityViolationException e) {
@@ -66,11 +78,11 @@ public class AuthController {
     }
 
     // Método para generar un JWT REAL y FIRMADO usando Java nativo
-    private String generarJwt(String correo, String rol) {
+    private String generarJwt(Long id, String correo, String rol) {
         try {
             String header = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
             long exp = (System.currentTimeMillis() / 1000) + 86400; // Expira en 24 horas
-            String payload = "{\"sub\":\"" + correo + "\",\"rol\":\"" + rol + "\",\"exp\":" + exp + "}";
+            String payload = "{\"id\":" + id + ",\"sub\":\"" + correo + "\",\"rol\":\"" + rol + "\",\"exp\":" + exp + "}";
             
             String encodedHeader = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(header.getBytes("UTF-8"));
             String encodedPayload = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes("UTF-8"));

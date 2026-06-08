@@ -11,6 +11,7 @@ Microservicio especializado en gestionar el registro, consulta y eliminación de
 - Java 17+
 - Spring Data JPA
 - PostgreSQL
+- **Resilience4j:** Circuit Breaker aplicado en la validación externa de usuarios.
 - Build Tool: Maven
 
 ## Ejecución y Pruebas Locales
@@ -34,6 +35,8 @@ Puedes enviar peticiones a `http://localhost:8082` (o a través del Gateway `htt
 - `POST /api/asistencia/registrar`: Registrar asistencia de manera automática. Valida que el usuario exista en el servicio de usuarios y registra la hora actual.
 - `DELETE /api/asistencia/{id}`: Eliminar el registro de asistencia.
 
+## Resiliencia
+Este servicio depende del **Servicio de Usuarios** para validar la existencia de estudiantes. Se ha implementado un Circuit Breaker en el cliente HTTP para manejar caídas del servicio de identidad sin bloquear el registro de asistencia.
 ### Pruebas Unitarias
 Para correr la batería de pruebas (con Mockito):
 ```cmd

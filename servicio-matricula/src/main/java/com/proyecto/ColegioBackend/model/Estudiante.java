@@ -19,7 +19,7 @@ public class Estudiante {
     private String rut;
 
     private LocalDate fechaNacimiento;
-    private String curso;
+    private Long cursoId;
 
     // Este ID vincula al estudiante con su cuenta de login en servicio-usuarios
     private Long usuarioId;

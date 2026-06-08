@@ -12,7 +12,8 @@
             "name": "ApigatewayApplication",
             "request": "launch",
             "mainClass": "com.colegio.apigateway.ApigatewayApplication",
-            "projectName": "apigateway"
+            "projectName": "apigateway",
+            "vmArgs": " -Dcom.sun.management.jmxremote"
         },
         {
             "type": "java",
@@ -93,6 +94,16 @@
             "cwd": "${workspaceFolder}",
             "mainClass": "com.proyecto.ColegioBackend.AsistenciaApplication",
             "projectName": "com.proyecto-servicio-asistencia",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ColegioAcademicoApplication<servicio-academico>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.proyecto.ColegioBackend.ColegioAcademicoApplication",
+            "projectName": "servicio-academico",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
         }
