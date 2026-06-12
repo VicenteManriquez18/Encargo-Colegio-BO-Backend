@@ -16,10 +16,17 @@ public class Asistencia {
     @Column(name = "usuario_id")
     private Long usuarioId;
 
-    private String nombreUsuario; // Aquí guardaremos el correo obtenido del otro servicio
+    private String nombreUsuario; // Correo
 
     @Column(nullable = false)
     private LocalDateTime fecha;
+
+    @Column(name = "curso_id")
+    private Long cursoId;
+
+    private String asignatura;
+
+    private Boolean presente = true;
 
     // Getters and Setters
     public Long getId() {
@@ -52,5 +59,29 @@ public class Asistencia {
 
     public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
+    }
+
+    public Long getCursoId() {
+        return cursoId;
+    }
+
+    public void setCursoId(Long cursoId) {
+        this.cursoId = cursoId;
+    }
+
+    public String getAsignatura() {
+        return asignatura;
+    }
+
+    public void setAsignatura(String asignatura) {
+        this.asignatura = asignatura;
+    }
+
+    public Boolean getPresente() {
+        return presente;
+    }
+
+    public void setPresente(Boolean presente) {
+        this.presente = presente;
     }
 }

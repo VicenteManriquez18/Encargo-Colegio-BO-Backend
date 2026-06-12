@@ -1,16 +1,13 @@
 package com.proyecto.reportes.listener;
 
 import com.proyecto.reportes.entity.ReporteAsistencia;
+import com.proyecto.reportes.factory.ReporteAsistenciaFactory;
 import com.proyecto.reportes.model.event.AsistenciaRegistradaEvent;
 import com.proyecto.reportes.repository.ReporteAsistenciaRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @Component
 public class AsistenciaEventListener {
@@ -19,25 +16,16 @@ public class AsistenciaEventListener {
     
     @Autowired
     private ReporteAsistenciaRepository reporteAsistenciaRepository;
+
+    @Autowired
+    private ReporteAsistenciaFactory reporteAsistenciaFactory;
     
     @RabbitListener(queues = "eventos.asistencia.queue")
     public void handleAsistenciaRegistrada(AsistenciaRegistradaEvent evento) {
         try {
             log.info("Recibido evento de asistencia registrada: {}", evento.getAsistenciaId());
             
-            LocalDateTime fechaEvento = LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(evento.getFechaEvento()),
-                    ZoneId.systemDefault()
-            );
-            
-            ReporteAsistencia reporte = new ReporteAsistencia(
-                    evento.getAsistenciaId(),
-                    evento.getAlumnoId(),
-                    evento.getCursoId(),
-                    evento.getPresente(),
-                    LocalDateTime.now(),
-                    fechaEvento
-            );
+            ReporteAsistencia reporte = reporteAsistenciaFactory.buildReportEntity(evento);
             
             reporteAsistenciaRepository.save(reporte);
             log.info("Reporte de asistencia guardado exitosamente");

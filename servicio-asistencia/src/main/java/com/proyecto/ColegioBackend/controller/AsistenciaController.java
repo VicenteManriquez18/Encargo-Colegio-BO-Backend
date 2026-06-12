@@ -1,6 +1,7 @@
 package com.proyecto.ColegioBackend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,17 @@ public class AsistenciaController {
     private AsistenciaService asistenciaService;
 
     // Instanciamos WebClient para comunicación entre microservicios
-    private final WebClient webClient = WebClient.create();
+    @Autowired
+    private WebClient webClient;
+
+    @Value("${servicio.usuarios.url}")
+    private String usuariosUrl;
+
+    @Value("${servicio.matricula.url}")
+    private String matriculaUrl;
+
+    @Value("${servicio.academico.url}")
+    private String academicoUrl;
 
     // ==================== GET ====================
     
@@ -47,8 +58,123 @@ public class AsistenciaController {
     // ==================== POST ====================
     
     @PostMapping
-    public ResponseEntity<Asistencia> guardar(@RequestBody Asistencia asistencia) {
-        return new ResponseEntity<>(asistenciaService.guardar(asistencia), HttpStatus.CREATED);
+    public ResponseEntity<?> guardar(
+            @RequestBody Asistencia asistencia,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        
+        Map<String, Object> claims = parseToken(token);
+        if (claims == null || claims.get("rol") == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+        
+        String rol = (String) claims.get("rol");
+        Long profesorId = (Long) claims.get("id");
+        
+        if (!"Profesor".equalsIgnoreCase(rol)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Solo los profesores pueden registrar asistencia"));
+        }
+        
+        if (asistencia.getCursoId() == null || asistencia.getAsignatura() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Los campos 'cursoId' y 'asignatura' son requeridos"));
+        }
+        
+        // 1. Validar que el profesor esté asignado a la asignatura en este curso
+        if (!verificarAsignacionProfesor(asistencia.getCursoId(), asistencia.getAsignatura(), profesorId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Usted no es el profesor designado para la asignatura '" + asistencia.getAsignatura() + "' en este curso"));
+        }
+        
+        // 2. Validar que el estudiante esté matriculado en el curso
+        if (!verificarMatriculaCurso(asistencia.getUsuarioId(), asistencia.getCursoId())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El estudiante con ID de usuario " + asistencia.getUsuarioId() + " no está matriculado en este curso"));
+        }
+        
+        asistencia.setFecha(LocalDateTime.now());
+        Asistencia guardada = asistenciaService.guardar(asistencia);
+        return new ResponseEntity<>(guardada, HttpStatus.CREATED);
+    }
+
+    private Map<String, Object> parseToken(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                String[] parts = token.split("\\.");
+                if (parts.length == 3) {
+                    String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), "UTF-8");
+                    Long id = null;
+                    String rol = null;
+                    
+                    int idIndex = payload.indexOf("\"id\":");
+                    if (idIndex != -1) {
+                        int start = idIndex + 5;
+                        int end = payload.indexOf(",", start);
+                        if (end == -1) end = payload.indexOf("}", start);
+                        id = Long.parseLong(payload.substring(start, end).trim());
+                    }
+                    
+                    int rolIndex = payload.indexOf("\"rol\":\"");
+                    if (rolIndex != -1) {
+                        int start = rolIndex + 7;
+                        int end = payload.indexOf("\"", start);
+                        rol = payload.substring(start, end);
+                    }
+                    
+                    return Map.of("id", id, "rol", rol);
+                }
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+        return null;
+    }
+
+    private boolean verificarMatriculaCurso(Long studentUserId, Long cursoId) {
+        try {
+            String url = matriculaUrl + "/api/matricula/estudiantes/usuario/" + studentUserId;
+            java.util.Map response = webClient.get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(java.util.Map.class)
+                .block();
+            if (response != null && response.containsKey("cursoId")) {
+                Object cId = response.get("cursoId");
+                if (cId != null) {
+                    Long actualCursoId = Long.valueOf(cId.toString());
+                    return cursoId.equals(actualCursoId);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al verificar matrícula para usuarioId " + studentUserId + ": " + e.getMessage());
+        }
+        return false;
+    }
+
+    private boolean verificarAsignacionProfesor(Long cursoId, String asignatura, Long profesorId) {
+        try {
+            String url = academicoUrl + "/api/academico/cursos/" + cursoId + "/asignaturas";
+            java.util.List response = webClient.get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(java.util.List.class)
+                .block();
+            if (response != null) {
+                for (Object item : response) {
+                    if (item instanceof java.util.Map) {
+                        java.util.Map map = (java.util.Map) item;
+                        String asigName = (String) map.get("asignatura");
+                        if (asignatura.equalsIgnoreCase(asigName)) {
+                            Object profIdObj = map.get("profesorId");
+                            if (profIdObj != null) {
+                                Long actualProfesorId = Long.valueOf(profIdObj.toString());
+                                return profesorId.equals(actualProfesorId);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al verificar asignación de profesor para cursoId " + cursoId + ": " + e.getMessage());
+        }
+        return false;
     }
 
     @PostMapping("/registrar")
@@ -61,9 +187,7 @@ public class AsistenciaController {
         Long usuarioId = Long.valueOf(idObj.toString());
 
         try {
-            // Usamos 127.0.0.1 para evitar problemas de resolución de localhost
-            String url = "http://127.0.0.1:8081/api/usuarios/" + usuarioId;
-            
+            String url = usuariosUrl + "/api/usuarios/" + usuarioId;
             ResponseEntity<Map> response = webClient.get()
                 .uri(url)
                 .retrieve()
@@ -81,7 +205,7 @@ public class AsistenciaController {
             nuevaAsistencia.setNombreUsuario((String) usuario.get("correo"));
             nuevaAsistencia.setFecha(LocalDateTime.now());
 
-            return ResponseEntity.ok(asistenciaRepository.save(nuevaAsistencia));
+            return ResponseEntity.ok(asistenciaService.guardar(nuevaAsistencia));
         } catch (HttpClientErrorException.NotFound e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("error", "ID de usuario inexistente"));
@@ -96,7 +220,7 @@ public class AsistenciaController {
     @GetMapping("/alumnos")
     public ResponseEntity<?> obtenerAlumnos(@RequestHeader(value = "Authorization", required = false) String token) {
         try {
-            String url = "http://127.0.0.1:8081/api/usuarios";
+            String url = usuariosUrl + "/api/usuarios";
             WebClient.RequestHeadersSpec<?> request = webClient.get().uri(url);
             if (token != null) {
                 request = request.header("Authorization", token);

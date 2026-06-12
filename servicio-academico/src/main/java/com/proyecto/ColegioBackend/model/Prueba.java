@@ -27,6 +27,9 @@ public class Prueba {
     @Column(nullable = false)
     private LocalDate fecha;
 
+    @Column(nullable = false)
+    private String asignatura; // "ingles 1", "lenguaje 1", etc.
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "curso_id", nullable = false)
     private Curso curso;

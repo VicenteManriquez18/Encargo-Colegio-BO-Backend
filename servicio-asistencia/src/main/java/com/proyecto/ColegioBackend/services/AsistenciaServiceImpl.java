@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 
 import com.proyecto.ColegioBackend.model.Asistencia;
 import com.proyecto.ColegioBackend.repository.AsistenciaRepository;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import com.proyecto.ColegioBackend.model.event.AsistenciaRegistradaEvent;
+import com.proyecto.ColegioBackend.factory.AsistenciaRegistradaEventFactory;
 
 @Service
 public class AsistenciaServiceImpl implements AsistenciaService {
@@ -18,6 +21,12 @@ public class AsistenciaServiceImpl implements AsistenciaService {
 
     @Autowired
     private AsistenciaRepository asistenciaRepository;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private AsistenciaRegistradaEventFactory asistenciaRegistradaEventFactory;
 
     @Override
     public List<Asistencia> listarTodas() {
@@ -32,7 +41,15 @@ public class AsistenciaServiceImpl implements AsistenciaService {
     @Override
     public Asistencia guardar(Asistencia asistencia) {
         try {
-            return asistenciaRepository.save(asistencia);
+            Asistencia saved = asistenciaRepository.save(asistencia);
+            try {
+                AsistenciaRegistradaEvent event = asistenciaRegistradaEventFactory.buildEvent(saved);
+                rabbitTemplate.convertAndSend("eventos.exchange", "asistencia.registrada", event);
+                logger.info("Publicado evento de asistencia registrada con ID: {}", saved.getId());
+            } catch (Exception e) {
+                logger.warn("ADVERTENCIA: No se pudo enviar el evento de asistencia registrada a RabbitMQ (¿servidor caído?). Detalle: {}", e.getMessage());
+            }
+            return saved;
         } catch (Exception e) {
             logger.error("Error al guardar asistencia para el usuario {}: {}", asistencia.getUsuarioId(), e.getMessage());
             return null;

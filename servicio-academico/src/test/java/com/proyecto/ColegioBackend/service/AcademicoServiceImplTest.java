@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Spy;
+import com.proyecto.ColegioBackend.factory.NotaGeneradaEventFactory;
 
 import com.proyecto.ColegioBackend.model.Curso;
 import com.proyecto.ColegioBackend.model.Matricula;
@@ -24,6 +26,7 @@ import com.proyecto.ColegioBackend.repository.CursoRepository;
 import com.proyecto.ColegioBackend.repository.MatriculaRepository;
 import com.proyecto.ColegioBackend.repository.PruebaRepository;
 import com.proyecto.ColegioBackend.repository.NotaRepository;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 @ExtendWith(MockitoExtension.class)
 public class AcademicoServiceImplTest {
@@ -39,6 +42,15 @@ public class AcademicoServiceImplTest {
 
     @Mock
     private NotaRepository notaRepository;
+
+    @Mock
+    private com.proyecto.ColegioBackend.repository.CursoAsignaturaRepository cursoAsignaturaRepository;
+
+    @Mock
+    private RabbitTemplate rabbitTemplate;
+
+    @Spy
+    private NotaGeneradaEventFactory notaGeneradaEventFactory = new NotaGeneradaEventFactory();
 
     @InjectMocks
     private AcademicoServiceImpl academicoService;
@@ -104,10 +116,12 @@ public class AcademicoServiceImplTest {
     @Test
     void crearCurso_Exito() {
         when(cursoRepository.save(any(Curso.class))).thenReturn(curso);
+        when(cursoAsignaturaRepository.save(any(com.proyecto.ColegioBackend.model.CursoAsignatura.class))).thenReturn(null);
         Curso nuevoCurso = Curso.builder().nombre("2 B").build();
         Curso resultado = academicoService.crearCurso(nuevoCurso);
         assertNotNull(resultado);
         verify(cursoRepository, times(1)).save(any(Curso.class));
+        verify(cursoAsignaturaRepository, times(4)).save(any(com.proyecto.ColegioBackend.model.CursoAsignatura.class));
     }
 
     @Test

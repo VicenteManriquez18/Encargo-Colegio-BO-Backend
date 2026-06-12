@@ -49,4 +49,36 @@ public class CursoController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/{id}/asignaturas")
+    public ResponseEntity<List<com.proyecto.ColegioBackend.model.CursoAsignatura>> obtenerAsignaturas(@PathVariable Long id) {
+        return ResponseEntity.ok(academicoService.listarAsignacionesPorCurso(id));
+    }
+
+    @PutMapping("/{id}/asignaturas/profesor")
+    public ResponseEntity<?> asignarProfesorAsignatura(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        try {
+            String asignatura = (String) body.get("asignatura");
+            Object profIdObj = body.get("profesorId");
+            if (asignatura == null || profIdObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Los campos 'asignatura' y 'profesorId' son requeridos"));
+            }
+            Long profesorId = Long.valueOf(profIdObj.toString());
+            com.proyecto.ColegioBackend.model.CursoAsignatura ca = academicoService.asignarProfesorAsignatura(id, asignatura, profesorId);
+            return ResponseEntity.ok(ca);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/asignaciones")
+    public ResponseEntity<?> listarTodasAsignaciones() {
+        return ResponseEntity.ok(academicoService.listarTodasAsignaciones());
+    }
+
+    @GetMapping("/asignaciones/profesor/{profesorId}")
+    public ResponseEntity<?> listarAsignacionesPorProfesor(@PathVariable Long profesorId) {
+        return ResponseEntity.ok(academicoService.listarAsignacionesPorProfesor(profesorId));
+    }
 }

@@ -22,15 +22,59 @@ public class ReporteCompletoController {
     @Autowired
     private ReporteCompletoService reporteCompletoService;
 
+    @Autowired
+    private org.springframework.web.reactive.function.client.WebClient webClient;
+
+    private boolean verificarVinculacionApoderado(Long alumnoId, Long apoderadoUsuarioId) {
+        try {
+            String url = "http://127.0.0.1:8083/api/matricula/estudiantes/usuario/" + alumnoId;
+            java.util.Map response = webClient.get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(java.util.Map.class)
+                .block();
+            if (response != null && response.containsKey("apoderado")) {
+                java.util.Map apoderado = (java.util.Map) response.get("apoderado");
+                if (apoderado != null && apoderado.containsKey("usuarioId")) {
+                    Long val = Long.valueOf(apoderado.get("usuarioId").toString());
+                    return val.equals(apoderadoUsuarioId);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error al verificar vinculación apoderado para alumnoId {}: {}", alumnoId, e.getMessage());
+        }
+        return false;
+    }
+
     @GetMapping("/alumno/{alumnoId}")
     @Operation(summary = "Obtener reporte consolidado de un alumno",
             description = "Realiza peticiones a los servicios de académico y asistencia vía WebClient, y los consolida junto con el comportamiento registrado localmente.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Reporte consolidado obtenido con éxito")
     })
-    public ResponseEntity<ReporteCompletoDTO> obtenerReporteCompleto(
+    public ResponseEntity<?> obtenerReporteCompleto(
             @PathVariable Long alumnoId,
-            @RequestParam(value = "comportamiento", required = false, defaultValue = "true") boolean incluirComportamiento) {
+            @RequestParam(value = "comportamiento", required = false, defaultValue = "true") boolean incluirComportamiento,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        
+        java.util.Map<String, Object> claims = com.proyecto.reportes.config.JwtUtil.parseToken(token);
+        if (claims == null || claims.get("rol") == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(java.util.Map.of("error", "No autorizado"));
+        }
+        
+        String rol = (String) claims.get("rol");
+        Long requesterUserId = (Long) claims.get("id");
+        
+        if ("Alumno".equalsIgnoreCase(rol)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(java.util.Map.of("error", "Los alumnos no pueden ver reportes"));
+        }
+        
+        if ("Apoderado".equalsIgnoreCase(rol)) {
+            if (!verificarVinculacionApoderado(alumnoId, requesterUserId)) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(java.util.Map.of("error", "Acceso denegado: este alumno no está vinculado a su cuenta de apoderado"));
+            }
+        }
+
         log.info("GET: Generando reporte consolidado completo para el alumno {} (incluir comportamiento: {})", alumnoId, incluirComportamiento);
         ReporteCompletoDTO reporte = reporteCompletoService.obtenerReporteCompleto(alumnoId, incluirComportamiento);
         return ResponseEntity.ok(reporte);

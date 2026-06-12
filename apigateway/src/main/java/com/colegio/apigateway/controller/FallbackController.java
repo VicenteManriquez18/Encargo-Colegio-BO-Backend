@@ -92,4 +92,19 @@ public class FallbackController {
                 "status_code", 503
         ));
     }
+
+    @GetMapping("/mensajeria")
+    @Operation(summary = "Fallback - Servicio de Mensajería",
+            description = "Se ejecuta cuando el servicio de mensajería no responde")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "503", description = "Servicio de mensajería no disponible")
+    })
+    public ResponseEntity<?> fallbackMensajeria() {
+        log.warn("Fallback: Servicio mensajería no responde");
+        return ResponseEntity.status(503).body(Map.of(
+                "error", "El servicio de mensajería no responde (Gateway Fallback)",
+                "service", "mensajeria",
+                "status_code", 503
+        ));
+    }
 }

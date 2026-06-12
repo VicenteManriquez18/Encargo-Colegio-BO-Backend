@@ -17,12 +17,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.proyecto.ColegioBackend.model.Asistencia;
 import com.proyecto.ColegioBackend.repository.AsistenciaRepository;
+import org.mockito.Spy;
+import com.proyecto.ColegioBackend.factory.AsistenciaRegistradaEventFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 @ExtendWith(MockitoExtension.class)
 public class AsistenciaServiceImplTest {
 
     @Mock
     private AsistenciaRepository asistenciaRepository;
+
+    @Mock
+    private RabbitTemplate rabbitTemplate;
+
+    @Spy
+    private AsistenciaRegistradaEventFactory asistenciaRegistradaEventFactory = new AsistenciaRegistradaEventFactory();
 
     @InjectMocks
     private AsistenciaServiceImpl asistenciaService;

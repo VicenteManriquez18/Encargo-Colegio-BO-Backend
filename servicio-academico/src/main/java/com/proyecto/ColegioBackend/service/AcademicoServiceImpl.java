@@ -17,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import com.proyecto.ColegioBackend.model.event.NotaGeneradaEvent;
+import com.proyecto.ColegioBackend.factory.NotaGeneradaEventFactory;
 
 @Service
 public class AcademicoServiceImpl implements AcademicoService {
@@ -34,6 +37,38 @@ public class AcademicoServiceImpl implements AcademicoService {
 
     @Autowired
     private NotaRepository notaRepository;
+
+    @Autowired
+    private com.proyecto.ColegioBackend.repository.CursoAsignaturaRepository cursoAsignaturaRepository;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private NotaGeneradaEventFactory notaGeneradaEventFactory;
+
+    private String getCourseSuffix(String nombre) {
+        if (nombre == null) return "";
+        String normalized = nombre.toLowerCase();
+        if (normalized.contains("primero") || normalized.contains("1")) {
+            return " 1";
+        } else if (normalized.contains("segundo") || normalized.contains("2")) {
+            return " 2";
+        } else if (normalized.contains("tercero") || normalized.contains("3")) {
+            return " 3";
+        } else if (normalized.contains("cuarto") || normalized.contains("4")) {
+            return " 4";
+        } else if (normalized.contains("quinto") || normalized.contains("5")) {
+            return " 5";
+        } else if (normalized.contains("sexto") || normalized.contains("6")) {
+            return " 6";
+        } else if (normalized.contains("septimo") || normalized.contains("7")) {
+            return " 7";
+        } else if (normalized.contains("octavo") || normalized.contains("8")) {
+            return " 8";
+        }
+        return "";
+    }
 
     // ==================== CURSOS ====================
 
@@ -55,7 +90,29 @@ public class AcademicoServiceImpl implements AcademicoService {
             String safeName = curso.getNombre().toUpperCase().replaceAll("[^A-Z0-9]", "-");
             curso.setCodigo("CUR-" + safeName);
         }
-        return cursoRepository.save(curso);
+        Curso guardado = cursoRepository.save(curso);
+
+        // Auto-seed the 4 subjects with suffix using the course ID
+        String suffix = " " + guardado.getId();
+        
+        cursoAsignaturaRepository.save(com.proyecto.ColegioBackend.model.CursoAsignatura.builder()
+            .curso(guardado)
+            .asignatura("ingles" + suffix)
+            .build());
+        cursoAsignaturaRepository.save(com.proyecto.ColegioBackend.model.CursoAsignatura.builder()
+            .curso(guardado)
+            .asignatura("lenguaje" + suffix)
+            .build());
+        cursoAsignaturaRepository.save(com.proyecto.ColegioBackend.model.CursoAsignatura.builder()
+            .curso(guardado)
+            .asignatura("matematica" + suffix)
+            .build());
+        cursoAsignaturaRepository.save(com.proyecto.ColegioBackend.model.CursoAsignatura.builder()
+            .curso(guardado)
+            .asignatura("historia" + suffix)
+            .build());
+
+        return guardado;
     }
 
     @Override
@@ -65,6 +122,72 @@ public class AcademicoServiceImpl implements AcademicoService {
                 .orElseThrow(() -> new RuntimeException("Curso no encontrado con ID: " + cursoId));
         curso.setProfesorId(profesorId);
         return cursoRepository.save(curso);
+    }
+
+    // Implementation of Asignaturas de Curso
+    @Override
+    public List<com.proyecto.ColegioBackend.model.CursoAsignatura> listarAsignacionesPorCurso(Long cursoId) {
+        List<com.proyecto.ColegioBackend.model.CursoAsignatura> list = cursoAsignaturaRepository.findByCursoId(cursoId);
+        if (list.isEmpty()) {
+            Curso curso = cursoRepository.findById(cursoId).orElse(null);
+            if (curso != null) {
+                String suffix = " " + curso.getId();
+                cursoAsignaturaRepository.save(com.proyecto.ColegioBackend.model.CursoAsignatura.builder()
+                    .curso(curso)
+                    .asignatura("ingles" + suffix)
+                    .build());
+                cursoAsignaturaRepository.save(com.proyecto.ColegioBackend.model.CursoAsignatura.builder()
+                    .curso(curso)
+                    .asignatura("lenguaje" + suffix)
+                    .build());
+                cursoAsignaturaRepository.save(com.proyecto.ColegioBackend.model.CursoAsignatura.builder()
+                    .curso(curso)
+                    .asignatura("matematica" + suffix)
+                    .build());
+                cursoAsignaturaRepository.save(com.proyecto.ColegioBackend.model.CursoAsignatura.builder()
+                    .curso(curso)
+                    .asignatura("historia" + suffix)
+                    .build());
+                list = cursoAsignaturaRepository.findByCursoId(cursoId);
+            }
+        }
+        return list;
+    }
+
+    @Override
+    @Transactional
+    public com.proyecto.ColegioBackend.model.CursoAsignatura asignarProfesorAsignatura(Long cursoId, String asignatura, Long profesorId) {
+        // Asegurarse de que las asignaturas están inicializadas
+        listarAsignacionesPorCurso(cursoId);
+        
+        com.proyecto.ColegioBackend.model.CursoAsignatura ca = cursoAsignaturaRepository
+            .findByCursoIdAndAsignaturaIgnoreCase(cursoId, asignatura)
+            .orElseThrow(() -> new RuntimeException("Asignatura '" + asignatura + "' no encontrada en el curso"));
+        
+        ca.setProfesorId(profesorId);
+        return cursoAsignaturaRepository.save(ca);
+    }
+
+    @Override
+    public List<com.proyecto.ColegioBackend.model.CursoAsignatura> listarTodasAsignaciones() {
+        // Asegurarse de que todos los cursos tienen asignaturas inicializadas
+        List<Curso> cursos = cursoRepository.findAll();
+        for (Curso c : cursos) {
+            listarAsignacionesPorCurso(c.getId());
+        }
+        return cursoAsignaturaRepository.findAll();
+    }
+
+    @Override
+    public List<com.proyecto.ColegioBackend.model.CursoAsignatura> listarAsignacionesPorProfesor(Long profesorId) {
+        return cursoAsignaturaRepository.findByProfesorId(profesorId);
+    }
+
+    @Override
+    public com.proyecto.ColegioBackend.model.CursoAsignatura obtenerAsignacionPorCursoYAsignatura(Long cursoId, String asignatura) {
+        // Inicializar si es necesario
+        listarAsignacionesPorCurso(cursoId);
+        return cursoAsignaturaRepository.findByCursoIdAndAsignaturaIgnoreCase(cursoId, asignatura).orElse(null);
     }
 
     @Override
@@ -156,7 +279,17 @@ public class AcademicoServiceImpl implements AcademicoService {
                     .build();
         }
 
-        return notaRepository.save(nota);
+        Nota saved = notaRepository.save(nota);
+
+        try {
+            NotaGeneradaEvent event = notaGeneradaEventFactory.buildEvent(saved);
+            rabbitTemplate.convertAndSend("eventos.exchange", "nota.generada", event);
+            logger.info("Publicado evento de nota generada con ID: {}", saved.getId());
+        } catch (Exception e) {
+            logger.warn("ADVERTENCIA: No se pudo enviar el evento de nota generada a RabbitMQ (¿servidor caído?). Detalle: {}", e.getMessage());
+        }
+
+        return saved;
     }
 
     @Override

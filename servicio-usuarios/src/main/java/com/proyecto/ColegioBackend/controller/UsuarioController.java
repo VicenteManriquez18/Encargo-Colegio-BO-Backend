@@ -30,13 +30,29 @@ public class UsuarioController {
     private PasswordEncoder passwordEncoder;
 
     @GetMapping
-    public List<Usuario> listar() {
+    public List<Usuario> listar(@org.springframework.web.bind.annotation.RequestParam(required = false) String rol) {
+        if (rol != null && !rol.isEmpty()) {
+            return usuarioService.listarPorRol(rol);
+        }
         return usuarioService.listarTodos();
     }
 
     @PostMapping
-    public ResponseEntity<Usuario> guardar(@RequestBody Usuario usuario) {
-        // Al guardar, la fecha de creación se generará automáticamente por el @CreationTimestamp
+    public ResponseEntity<?> guardar(@RequestBody Usuario usuario) {
+        String password = usuario.getPassword();
+        if (password == null || password.length() < 8) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "La contraseña debe tener al menos 8 caracteres."));
+        }
+        boolean hasUppercase = password.chars().anyMatch(Character::isUpperCase);
+        boolean hasLowercase = password.chars().anyMatch(Character::isLowerCase);
+        boolean hasDigit = password.chars().anyMatch(Character::isDigit);
+        boolean hasSpecial = password.chars().anyMatch(c -> !Character.isLetterOrDigit(c));
+        if (!hasUppercase || !hasLowercase || !hasDigit || !hasSpecial) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", 
+                "La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial."));
+        }
+
+        usuario.setPassword(passwordEncoder.encode(password));
         return new ResponseEntity<>(usuarioService.guardar(usuario), HttpStatus.CREATED);
     }
 

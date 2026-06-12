@@ -51,21 +51,38 @@ public class AuthController {
         try {
             System.out.println("Registrando usuario: " + user.get("correo"));
             
+            String password = user.get("password");
+            if (password == null || password.length() < 8) {
+                return ResponseEntity.badRequest().body(Map.of("error", "La contraseña debe tener al menos 8 caracteres."));
+            }
+            boolean hasUppercase = password.chars().anyMatch(Character::isUpperCase);
+            boolean hasLowercase = password.chars().anyMatch(Character::isLowerCase);
+            boolean hasDigit = password.chars().anyMatch(Character::isDigit);
+            boolean hasSpecial = password.chars().anyMatch(c -> !Character.isLetterOrDigit(c));
+            if (!hasUppercase || !hasLowercase || !hasDigit || !hasSpecial) {
+                return ResponseEntity.badRequest().body(Map.of("error", 
+                    "La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial."));
+            }
+
             Usuario nuevoUsuario = new Usuario();
             nuevoUsuario.setCorreo(user.get("correo"));
             // Encriptamos la contraseña antes de guardarla
-            nuevoUsuario.setPassword(passwordEncoder.encode(user.get("password")));
+            nuevoUsuario.setPassword(passwordEncoder.encode(password));
             nuevoUsuario.setRol(user.getOrDefault("rol", "Alumno")); // Usamos el rol de Postman, o Alumno por defecto
             
             Usuario guardado = usuarioRepository.save(nuevoUsuario); // ¡Guardado directo!
             System.out.println("¡ÉXITO! Usuario guardado en BD con ID: " + guardado.getId());
 
-            // Notificar internamente al Servicio Matrícula sobre el nuevo usuario
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, Map.of(
-                "id", guardado.getId(),
-                "correo", guardado.getCorreo(),
-                "rol", guardado.getRol()
-            ));
+            // Notificar internamente al Servicio Matrícula sobre el nuevo usuario de forma segura
+            try {
+                rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, Map.of(
+                    "id", guardado.getId(),
+                    "correo", guardado.getCorreo(),
+                    "rol", guardado.getRol()
+                ));
+            } catch (Exception amqpEx) {
+                System.err.println("ADVERTENCIA: No se pudo enviar notificación a RabbitMQ. El usuario se guardó igualmente. Detalle: " + amqpEx.getMessage());
+            }
             
             return ResponseEntity.ok(Map.of("mensaje", "Usuario registrado con éxito", "id", guardado.getId()));
         } catch (DataIntegrityViolationException e) {

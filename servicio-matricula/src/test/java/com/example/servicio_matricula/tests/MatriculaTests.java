@@ -18,6 +18,12 @@ import com.proyecto.ColegioBackend.repository.EstudianteRepository;
 import com.proyecto.ColegioBackend.services.MatriculaServiceImpl;
 import com.proyecto.ColegioBackend.repository.ApoderadoRepository;
 import com.proyecto.ColegioBackend.model.Apoderado;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import java.util.Map;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.mockito.Spy;
+import com.proyecto.ColegioBackend.factory.MatriculaRegistradaEventFactory;
 
 @SuppressWarnings("null")
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +31,14 @@ public class MatriculaTests {
 
     @Mock private EstudianteRepository estudianteRepository;
     @Mock private ApoderadoRepository apoderadoRepository;
+    @Mock private RabbitTemplate rabbitTemplate;
+    @Mock private WebClient webClient;
+    @Mock private WebClient.RequestHeadersUriSpec requestHeadersUriSpec;
+    @Mock private WebClient.RequestHeadersSpec requestHeadersSpec;
+    @Mock private WebClient.ResponseSpec responseSpec;
+
+    @Spy
+    private MatriculaRegistradaEventFactory matriculaRegistradaEventFactory = new MatriculaRegistradaEventFactory();
 
     @InjectMocks private MatriculaServiceImpl matriculaService;
 
@@ -37,6 +51,7 @@ public class MatriculaTests {
         apoderado.setId(1L);
         apoderado.setNombre("Juan Perez");
         apoderado.setRut("12.345.678-9");
+        apoderado.setUsuarioId(20L);
 
         estudiante = new Estudiante();
         estudiante.setId(1L);
@@ -44,6 +59,11 @@ public class MatriculaTests {
         estudiante.setRut("23.456.789-0");
         estudiante.setApoderado(apoderado);
         estudiante.setEstado("Activo");
+        estudiante.setUsuarioId(10L);
+
+        lenient().when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        lenient().when(requestHeadersUriSpec.uri(anyString())).thenReturn(requestHeadersSpec);
+        lenient().when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
     }
 
     @Test
@@ -97,6 +117,11 @@ public class MatriculaTests {
 
     @Test
     void registrarMatriculaCompleta_CuandoApoderadoEsNuevo_DebeGuardarAmbos() {
+        // Mock role checking
+        when(responseSpec.bodyToMono(Map.class))
+                .thenReturn(Mono.just(Map.of("rol", "Alumno")))
+                .thenReturn(Mono.just(Map.of("rol", "Apoderado")));
+
         // Simulamos que el apoderado NO existe en la BD
         when(apoderadoRepository.findByRut(any())).thenReturn(Optional.empty());
         when(apoderadoRepository.save(any())).thenReturn(apoderado);
@@ -111,8 +136,14 @@ public class MatriculaTests {
 
     @Test
     void registrarMatriculaCompleta_CuandoApoderadoYaExiste_DebeReutilizarlo() {
+        // Mock role checking
+        when(responseSpec.bodyToMono(Map.class))
+                .thenReturn(Mono.just(Map.of("rol", "Alumno")))
+                .thenReturn(Mono.just(Map.of("rol", "Apoderado")));
+
         // Simulamos que el apoderado SI existe
         when(apoderadoRepository.findByRut(apoderado.getRut())).thenReturn(Optional.of(apoderado));
+        when(apoderadoRepository.save(any(Apoderado.class))).thenReturn(apoderado);
         when(estudianteRepository.save(any(Estudiante.class))).thenReturn(estudiante);
 
         Estudiante resultado = matriculaService.registrarMatriculaCompleta(estudiante);
@@ -120,8 +151,8 @@ public class MatriculaTests {
         assertNotNull(resultado);
         assertNotNull(resultado.getApoderado());
         assertEquals(apoderado.getId(), resultado.getApoderado().getId());
-        // Verificamos que NO se llamó al save de apoderado porque ya existía
-        verify(apoderadoRepository, never()).save(any(Apoderado.class));
+        // Verificamos que se llamó al save de apoderado 1 vez para actualizar campos
+        verify(apoderadoRepository, times(1)).save(any(Apoderado.class));
         verify(estudianteRepository).save(estudiante);
     }
 }

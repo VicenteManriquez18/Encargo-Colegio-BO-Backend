@@ -31,6 +31,16 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
+    public List<Usuario> listarPorRol(String rol) {
+        try {
+            return usuarioRepository.findByRolIgnoreCase(rol);
+        } catch (Exception e) {
+            logger.error("Error al listar usuarios por rol {}: {}", rol, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
     public Usuario guardar(Usuario usuario) {
         try {
             // Aquí es el lugar perfecto para cifrar la contraseña con BCrypt 

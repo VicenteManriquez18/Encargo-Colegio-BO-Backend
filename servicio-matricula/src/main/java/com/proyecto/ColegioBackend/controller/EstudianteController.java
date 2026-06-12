@@ -1,6 +1,7 @@
 package com.proyecto.ColegioBackend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,14 @@ public class EstudianteController {
     @Autowired
     private EstudianteService matriculaService;
 
-    private final WebClient webClient = WebClient.create();
+    @Autowired
+    private WebClient webClient;
+
+    @Value("${servicio.usuarios.url}")
+    private String usuariosUrl;
+
+    @Value("${servicio.academico.url}")
+    private String academicoUrl;
 
     @GetMapping("/estudiantes")
     public List<Estudiante> listarEstudiantes() {
@@ -35,7 +43,7 @@ public class EstudianteController {
             // Integración con servicio-academico
             if (nuevoEstudiante.getUsuarioId() != null && nuevoEstudiante.getCursoId() != null) {
                 try {
-                    String url = "http://127.0.0.1:8084/api/academico/matriculas/registrar";
+                    String url = academicoUrl + "/api/academico/matriculas/registrar";
                     webClient.post()
                         .uri(url)
                         .bodyValue(Map.of(
@@ -62,12 +70,45 @@ public class EstudianteController {
         return estudiante != null ? ResponseEntity.ok(estudiante) : ResponseEntity.notFound().build();
     }
 
+    @GetMapping("/estudiantes/{id}")
+    public ResponseEntity<Estudiante> buscarPorId(@PathVariable Long id) {
+        Estudiante estudiante = matriculaService.buscarPorId(id);
+        return estudiante != null ? ResponseEntity.ok(estudiante) : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/estudiantes/usuario/{usuarioId}")
+    public ResponseEntity<Estudiante> buscarPorUsuarioId(@PathVariable Long usuarioId) {
+        java.util.Optional<Estudiante> estudiante = estudianteRepository.findByUsuarioId(usuarioId);
+        return estudiante.isPresent() ? ResponseEntity.ok(estudiante.get()) : ResponseEntity.notFound().build();
+    }
+
+    @Autowired
+    private com.proyecto.ColegioBackend.repository.ApoderadoRepository apoderadoRepository;
+
+    @Autowired
+    private com.proyecto.ColegioBackend.repository.EstudianteRepository estudianteRepository;
+
+    @GetMapping("/apoderados/me/estudiantes")
+    public ResponseEntity<?> obtenerMisEstudiantes(@RequestHeader(value = "Authorization", required = false) String token) {
+        Map<String, Object> claims = parseToken(token);
+        if (claims == null || claims.get("id") == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+        Long guardianUserId = (Long) claims.get("id");
+        java.util.Optional<com.proyecto.ColegioBackend.model.Apoderado> apoderadoOpt = apoderadoRepository.findByUsuarioId(guardianUserId);
+        if (apoderadoOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(List.of()); // Retorna lista vacía si no tiene ficha aún
+        }
+        List<Estudiante> estudiantes = estudianteRepository.findByApoderadoId(apoderadoOpt.get().getId());
+        return ResponseEntity.ok(estudiantes);
+    }
+
     // ==================== GET ALUMNOS DESDE USUARIOS ====================
 
     @GetMapping("/alumnos")
     public ResponseEntity<?> obtenerAlumnos(@RequestHeader(value = "Authorization", required = false) String token) {
         try {
-            String url = "http://127.0.0.1:8081/api/usuarios";
+            String url = usuariosUrl + "/api/usuarios";
             WebClient.RequestHeadersSpec<?> request = webClient.get().uri(url);
             if (token != null) {
                 request = request.header("Authorization", token);
@@ -78,5 +119,55 @@ public class EstudianteController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Error al conectar con el servicio de usuarios: " + e.getMessage()));
         }
+    }
+
+    @GetMapping("/usuarios/rol/{rol}")
+    public ResponseEntity<?> obtenerUsuariosPorRol(@PathVariable String rol, @RequestHeader(value = "Authorization", required = false) String token) {
+        try {
+            String url = usuariosUrl + "/api/usuarios?rol=" + rol;
+            WebClient.RequestHeadersSpec<?> request = webClient.get().uri(url);
+            if (token != null) {
+                request = request.header("Authorization", token);
+            }
+            ResponseEntity<List> response = request.retrieve().toEntity(List.class).block();
+            return ResponseEntity.ok(response.getBody());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error al conectar con el servicio de usuarios: " + e.getMessage()));
+        }
+    }
+
+    private Map<String, Object> parseToken(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                String[] parts = token.split("\\.");
+                if (parts.length == 3) {
+                    String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), "UTF-8");
+                    Long id = null;
+                    String rol = null;
+                    
+                    int idIndex = payload.indexOf("\"id\":");
+                    if (idIndex != -1) {
+                        int start = idIndex + 5;
+                        int end = payload.indexOf(",", start);
+                        if (end == -1) end = payload.indexOf("}", start);
+                        id = Long.parseLong(payload.substring(start, end).trim());
+                    }
+                    
+                    int rolIndex = payload.indexOf("\"rol\":\"");
+                    if (rolIndex != -1) {
+                        int start = rolIndex + 7;
+                        int end = payload.indexOf("\"", start);
+                        rol = payload.substring(start, end);
+                    }
+                    
+                    return Map.of("id", id, "rol", rol);
+                }
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+        return null;
     }
 }

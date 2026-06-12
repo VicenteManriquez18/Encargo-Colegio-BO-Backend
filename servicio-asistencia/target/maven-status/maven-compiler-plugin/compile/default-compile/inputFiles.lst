@@ -1,6 +1,11 @@
-C:\Users\davie\OneDrive\Documentos\duoc\fullstack\para3raentrega\colegio\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\services\AsistenciaService.java
-C:\Users\davie\OneDrive\Documentos\duoc\fullstack\para3raentrega\colegio\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\model\Asistencia.java
-C:\Users\davie\OneDrive\Documentos\duoc\fullstack\para3raentrega\colegio\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\AsistenciaApplication.java
-C:\Users\davie\OneDrive\Documentos\duoc\fullstack\para3raentrega\colegio\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\controller\AsistenciaController.java
-C:\Users\davie\OneDrive\Documentos\duoc\fullstack\para3raentrega\colegio\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\repository\AsistenciaRepository.java
-C:\Users\davie\OneDrive\Documentos\duoc\fullstack\para3raentrega\colegio\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\services\AsistenciaServiceImpl.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\controller\AsistenciaController.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\repository\AsistenciaRepository.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\services\AsistenciaServiceImpl.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\config\WebClientConfig.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\factory\EventFactory.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\model\event\AsistenciaRegistradaEvent.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\factory\AsistenciaRegistradaEventFactory.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\model\Asistencia.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\services\AsistenciaService.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\AsistenciaApplication.java
+C:\Users\vicho\Downloads\este\este\colegio\servicio-asistencia\src\main\java\com\proyecto\ColegioBackend\config\RabbitMQConfig.java

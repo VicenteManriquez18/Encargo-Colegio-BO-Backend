@@ -5,7 +5,12 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reporte_notas")
-public class ReporteNota {
+public class ReporteNota implements ReporteEntity {
+    
+    @Override
+    public LocalDateTime getFechaProcesamiento() {
+        return this.fechaRegistro;
+    }
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

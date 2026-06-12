@@ -14,6 +14,13 @@ public interface AcademicoService {
     Curso crearCurso(Curso curso);
     Curso asignarProfesor(Long cursoId, Long profesorId);
     Curso obtenerCursoPorNombre(String nombre);
+    
+    // Asignaturas de Curso
+    java.util.List<com.proyecto.ColegioBackend.model.CursoAsignatura> listarAsignacionesPorCurso(Long cursoId);
+    com.proyecto.ColegioBackend.model.CursoAsignatura asignarProfesorAsignatura(Long cursoId, String asignatura, Long profesorId);
+    java.util.List<com.proyecto.ColegioBackend.model.CursoAsignatura> listarTodasAsignaciones();
+    java.util.List<com.proyecto.ColegioBackend.model.CursoAsignatura> listarAsignacionesPorProfesor(Long profesorId);
+    com.proyecto.ColegioBackend.model.CursoAsignatura obtenerAsignacionPorCursoYAsignatura(Long cursoId, String asignatura);
 
     // Matrículas
     Matricula matricularAlumno(Long usuarioId, Long cursoId);

@@ -1,16 +1,13 @@
 package com.proyecto.reportes.listener;
 
 import com.proyecto.reportes.entity.ReporteNota;
+import com.proyecto.reportes.factory.ReporteNotaFactory;
 import com.proyecto.reportes.model.event.NotaGeneradaEvent;
 import com.proyecto.reportes.repository.ReporteNotaRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @Component
 public class NotaEventListener {
@@ -19,25 +16,16 @@ public class NotaEventListener {
     
     @Autowired
     private ReporteNotaRepository reporteNotaRepository;
+
+    @Autowired
+    private ReporteNotaFactory reporteNotaFactory;
     
     @RabbitListener(queues = "eventos.nota.queue")
     public void handleNotaGenerada(NotaGeneradaEvent evento) {
         try {
             log.info("Recibido evento de nota generada: {}", evento.getNotaId());
             
-            LocalDateTime fechaEvento = LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(evento.getFechaEvento()),
-                    ZoneId.systemDefault()
-            );
-            
-            ReporteNota reporte = new ReporteNota(
-                    evento.getNotaId(),
-                    evento.getPruebaId(),
-                    evento.getAlumnoId(),
-                    evento.getValor(),
-                    LocalDateTime.now(),
-                    fechaEvento
-            );
+            ReporteNota reporte = reporteNotaFactory.buildReportEntity(evento);
             
             reporteNotaRepository.save(reporte);
             log.info("Reporte de nota guardado exitosamente");
