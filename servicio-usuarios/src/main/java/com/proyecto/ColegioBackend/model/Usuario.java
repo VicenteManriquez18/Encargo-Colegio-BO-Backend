@@ -31,4 +31,7 @@ public class Usuario {
 
     @Column(nullable = false)
     private String rol;
+
+    private String telefono;
+    private Long cursoId;
 }

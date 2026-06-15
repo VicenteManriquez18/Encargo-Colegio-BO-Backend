@@ -12,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/academico/matriculas")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 public class MatriculaController {
 
     @Autowired
@@ -47,5 +47,11 @@ public class MatriculaController {
     @GetMapping("/alumno/{usuarioId}")
     public ResponseEntity<List<Matricula>> listarPorAlumno(@PathVariable Long usuarioId) {
         return ResponseEntity.ok(academicoService.listarMatriculasPorAlumno(usuarioId));
+    }
+
+    @DeleteMapping("/alumno/{usuarioId}")
+    public ResponseEntity<?> eliminarMatriculasPorAlumno(@PathVariable Long usuarioId) {
+        academicoService.eliminarMatriculasPorAlumno(usuarioId);
+        return ResponseEntity.noContent().build();
     }
 }

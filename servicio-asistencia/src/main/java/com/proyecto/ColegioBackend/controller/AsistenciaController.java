@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import org.springframework.web.client.HttpClientErrorException;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/asistencia")
 public class AsistenciaController {
 

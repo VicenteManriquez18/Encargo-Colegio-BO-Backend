@@ -229,6 +229,15 @@ public class AcademicoServiceImpl implements AcademicoService {
         return matriculaRepository.findByUsuarioId(usuarioId);
     }
 
+    @Override
+    @Transactional
+    public void eliminarMatriculasPorAlumno(Long usuarioId) {
+        List<Matricula> matriculas = matriculaRepository.findByUsuarioId(usuarioId);
+        if (matriculas != null && !matriculas.isEmpty()) {
+            matriculaRepository.deleteAll(matriculas);
+        }
+    }
+
     // ==================== PRUEBAS ====================
 
     @Override
