@@ -320,9 +320,9 @@ GET /api/mensajes/contactos/{userId}
 
 - **Backend core:** Java 21 & Spring Boot 3.x
 - **Mensajería asíncrona:** RabbitMQ
-- **Base de Datos:** PostgreSQL (bases de datos independientes por servicio)
-- **API Gateway:** Spring Cloud Gateway (Resilience4j Circuit Breaker)
-- **Calidad de código:** SonarQube & JaCoCo (XML test coverage reports)
+- **Base de Datos:** PostgreSQL
+- **API Gateway:** Spring Cloud Gateway, Resilience4j Circuit Breaker)
+- **Calidad de código:** SonarQube
 - **Herramienta de construcción:** Maven
 
 ---
