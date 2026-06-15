@@ -68,7 +68,64 @@ public class UsuarioController {
                 // Si no se proporciona, mantenemos la existente
                 usuario.setPassword(existente.getPassword());
             }
-            return ResponseEntity.ok(usuarioService.guardar(usuario));
+            
+            Usuario guardado = usuarioService.guardar(usuario);
+            
+            // Sync with other microservices
+            try {
+                java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+                
+                if ("Alumno".equalsIgnoreCase(guardado.getRol())) {
+                    // Sync student info
+                    java.util.Map<String, Object> payload = new java.util.HashMap<>();
+                    payload.put("telefono", guardado.getTelefono());
+                    payload.put("correo", guardado.getCorreo());
+                    if (guardado.getCursoId() != null) {
+                        payload.put("cursoId", guardado.getCursoId());
+                    }
+                    
+                    String jsonPayload = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(payload);
+                    
+                    java.net.http.HttpRequest reqMatricula = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create("http://servicio-matricula:8083/api/matricula/estudiantes/usuario/" + id))
+                        .header("Content-Type", "application/json")
+                        .PUT(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
+                        .build();
+                    client.send(reqMatricula, java.net.http.HttpResponse.BodyHandlers.discarding());
+                    
+                    // Sync course enrollment in academic service
+                    if (guardado.getCursoId() != null) {
+                        java.util.Map<String, Object> acadPayload = java.util.Map.of(
+                            "usuarioId", id,
+                            "cursoId", guardado.getCursoId()
+                        );
+                        String acadJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(acadPayload);
+                        java.net.http.HttpRequest reqAcademico = java.net.http.HttpRequest.newBuilder()
+                            .uri(java.net.URI.create("http://servicio-academico:8084/api/academico/matriculas/registrar"))
+                            .header("Content-Type", "application/json")
+                            .POST(java.net.http.HttpRequest.BodyPublishers.ofString(acadJson))
+                            .build();
+                        client.send(reqAcademico, java.net.http.HttpResponse.BodyHandlers.discarding());
+                    }
+                } else if ("Profesor".equalsIgnoreCase(guardado.getRol())) {
+                    if (guardado.getCursoId() != null) {
+                        java.util.Map<String, Object> acadPayload = java.util.Map.of(
+                            "profesorId", id
+                        );
+                        String acadJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(acadPayload);
+                        java.net.http.HttpRequest reqAcademico = java.net.http.HttpRequest.newBuilder()
+                            .uri(java.net.URI.create("http://servicio-academico:8084/api/academico/cursos/" + guardado.getCursoId() + "/profesor"))
+                            .header("Content-Type", "application/json")
+                            .PUT(java.net.http.HttpRequest.BodyPublishers.ofString(acadJson))
+                            .build();
+                        client.send(reqAcademico, java.net.http.HttpResponse.BodyHandlers.discarding());
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error syncing update with microservices: " + e.getMessage());
+            }
+            
+            return ResponseEntity.ok(guardado);
         }
         return ResponseEntity.notFound().build();
     }
@@ -84,7 +141,40 @@ public class UsuarioController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        usuarioService.eliminar(id);
+        Usuario existente = usuarioService.buscarPorId(id);
+        if (existente != null) {
+            // Sync deletion with other microservices
+            try {
+                java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+                
+                if ("Alumno".equalsIgnoreCase(existente.getRol())) {
+                    // Delete in servicio-matricula
+                    java.net.http.HttpRequest reqMatricula = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create("http://servicio-matricula:8083/api/matricula/estudiantes/usuario/" + id))
+                        .DELETE()
+                        .build();
+                    client.send(reqMatricula, java.net.http.HttpResponse.BodyHandlers.discarding());
+                    
+                    // Delete in servicio-academico
+                    java.net.http.HttpRequest reqAcademico = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create("http://servicio-academico:8084/api/academico/matriculas/alumno/" + id))
+                        .DELETE()
+                        .build();
+                    client.send(reqAcademico, java.net.http.HttpResponse.BodyHandlers.discarding());
+                } else if ("Apoderado".equalsIgnoreCase(existente.getRol())) {
+                    // Delete in servicio-matricula
+                    java.net.http.HttpRequest reqMatricula = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create("http://servicio-matricula:8083/api/matricula/apoderados/usuario/" + id))
+                        .DELETE()
+                        .build();
+                    client.send(reqMatricula, java.net.http.HttpResponse.BodyHandlers.discarding());
+                }
+            } catch (Exception e) {
+                System.err.println("Error syncing deletion with microservices: " + e.getMessage());
+            }
+
+            usuarioService.eliminar(id);
+        }
         return ResponseEntity.noContent().build();
     }
 

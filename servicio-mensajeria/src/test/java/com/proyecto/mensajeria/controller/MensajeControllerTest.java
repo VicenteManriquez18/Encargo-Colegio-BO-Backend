@@ -5,58 +5,27 @@ import static org.mockito.Mockito.*;
 
 import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import com.proyecto.mensajeria.entity.Mensaje;
-import com.proyecto.mensajeria.repository.MensajeRepository;
+import com.proyecto.mensajeria.service.MensajeService;
+import com.proyecto.mensajeria.exception.UsuarioServicioNoDisponibleException;
 
 @ExtendWith(MockitoExtension.class)
 public class MensajeControllerTest {
 
     @Mock
-    private MensajeRepository mensajeRepository;
-
-    @Mock
-    private WebClient webClient;
-
-    @Mock
-    private WebClient.RequestHeadersUriSpec requestHeadersUriSpec;
-
-    @Mock
-    private WebClient.RequestHeadersSpec requestHeadersSpec;
-
-    @Mock
-    private WebClient.ResponseSpec responseSpec;
-
-    @Mock
-    private RabbitTemplate rabbitTemplate;
+    private MensajeService mensajeService;
 
     @InjectMocks
     private MensajeController mensajeController;
 
-    private String usuariosServiceUrl = "http://localhost:8081";
-
-    @SuppressWarnings("unchecked")
-    @BeforeEach
-    void setUp() {
-        org.springframework.test.util.ReflectionTestUtils.setField(mensajeController, "usuariosServiceUrl", usuariosServiceUrl);
-        
-        lenient().when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        lenient().when(requestHeadersUriSpec.uri(anyString())).thenReturn(requestHeadersSpec);
-        lenient().when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-    }
-
-    @SuppressWarnings("unchecked")
     @Test
     void enviarMensaje_ProfesorParaApoderado_Exito() {
         Map<String, Object> body = new HashMap<>();
@@ -64,20 +33,21 @@ public class MensajeControllerTest {
         body.put("destinatarioId", 2L);
         body.put("contenido", "Hola, ¿cómo está?");
 
-        Map<String, Object> emisor = Map.of("id", 1L, "rol", "Profesor", "correo", "profe@colegio.com");
-        Map<String, Object> receptor = Map.of("id", 2L, "rol", "Apoderado", "correo", "apoderado@colegio.com");
+        Mensaje mockMensaje = Mensaje.builder()
+                .id(1L)
+                .remitenteId(1L)
+                .destinatarioId(2L)
+                .contenido("Hola, ¿cómo está?")
+                .build();
 
-        when(responseSpec.bodyToMono(Map.class))
-                .thenReturn(Mono.just(emisor))
-                .thenReturn(Mono.just(receptor));
+        when(mensajeService.enviarMensaje(1L, 2L, "Hola, ¿cómo está?")).thenReturn(mockMensaje);
 
         ResponseEntity<?> response = mensajeController.enviarMensaje(body);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(rabbitTemplate, times(1)).convertAndSend(anyString(), anyString(), any(Mensaje.class));
+        verify(mensajeService, times(1)).enviarMensaje(1L, 2L, "Hola, ¿cómo está?");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void enviarMensaje_ApoderadoParaProfesor_Exito() {
         Map<String, Object> body = new HashMap<>();
@@ -85,20 +55,21 @@ public class MensajeControllerTest {
         body.put("destinatarioId", 1L);
         body.put("contenido", "Hola, todo bien.");
 
-        Map<String, Object> emisor = Map.of("id", 2L, "rol", "Apoderado", "correo", "apoderado@colegio.com");
-        Map<String, Object> receptor = Map.of("id", 1L, "rol", "Profesor", "correo", "profe@colegio.com");
+        Mensaje mockMensaje = Mensaje.builder()
+                .id(2L)
+                .remitenteId(2L)
+                .destinatarioId(1L)
+                .contenido("Hola, todo bien.")
+                .build();
 
-        when(responseSpec.bodyToMono(Map.class))
-                .thenReturn(Mono.just(emisor))
-                .thenReturn(Mono.just(receptor));
+        when(mensajeService.enviarMensaje(2L, 1L, "Hola, todo bien.")).thenReturn(mockMensaje);
 
         ResponseEntity<?> response = mensajeController.enviarMensaje(body);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(rabbitTemplate, times(1)).convertAndSend(anyString(), anyString(), any(Mensaje.class));
+        verify(mensajeService, times(1)).enviarMensaje(2L, 1L, "Hola, todo bien.");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void enviarMensaje_ProfesorParaProfesor_DebeRetornarBadRequest() {
         Map<String, Object> body = new HashMap<>();
@@ -106,12 +77,8 @@ public class MensajeControllerTest {
         body.put("destinatarioId", 3L);
         body.put("contenido", "Hola colega");
 
-        Map<String, Object> emisor = Map.of("id", 1L, "rol", "Profesor", "correo", "profe1@colegio.com");
-        Map<String, Object> receptor = Map.of("id", 3L, "rol", "Profesor", "correo", "profe2@colegio.com");
-
-        when(responseSpec.bodyToMono(Map.class))
-                .thenReturn(Mono.just(emisor))
-                .thenReturn(Mono.just(receptor));
+        when(mensajeService.enviarMensaje(1L, 3L, "Hola colega"))
+                .thenThrow(new IllegalArgumentException("La mensajería está restringida exclusivamente para la comunicación entre un Profesor y un Apoderado."));
 
         ResponseEntity<?> response = mensajeController.enviarMensaje(body);
 
@@ -119,7 +86,6 @@ public class MensajeControllerTest {
         assertTrue(response.getBody().toString().contains("La mensajería está restringida exclusivamente"));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void enviarMensaje_ServicioUsuariosCaido_DebeRetornarServiceUnavailable() {
         Map<String, Object> body = new HashMap<>();
@@ -127,8 +93,8 @@ public class MensajeControllerTest {
         body.put("destinatarioId", 2L);
         body.put("contenido", "Hola");
 
-        when(responseSpec.bodyToMono(Map.class))
-                .thenReturn(Mono.error(new RuntimeException("Error de conexión")));
+        when(mensajeService.enviarMensaje(1L, 2L, "Hola"))
+                .thenThrow(new UsuarioServicioNoDisponibleException("No se pudo verificar la información de los usuarios debido a que el servicio de usuarios no responde."));
 
         ResponseEntity<?> response = mensajeController.enviarMensaje(body);
 
@@ -136,27 +102,54 @@ public class MensajeControllerTest {
         assertTrue(response.getBody().toString().contains("No se pudo verificar la información"));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void enviarMensaje_RabbitMQCaido_FallbackParaGuardarEnBDDirectamente() {
+    void enviarMensaje_CamposRequeridosFaltantes_DebeRetornarBadRequest() {
         Map<String, Object> body = new HashMap<>();
         body.put("remitenteId", 1L);
-        body.put("destinatarioId", 2L);
-        body.put("contenido", "Hola, RabbitMQ está caído");
-
-        Map<String, Object> emisor = Map.of("id", 1L, "rol", "Profesor", "correo", "profe@colegio.com");
-        Map<String, Object> receptor = Map.of("id", 2L, "rol", "Apoderado", "correo", "apoderado@colegio.com");
-
-        when(responseSpec.bodyToMono(Map.class))
-                .thenReturn(Mono.just(emisor))
-                .thenReturn(Mono.just(receptor));
-
-        doThrow(new RuntimeException("RabbitMQ Connection Refused"))
-                .when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Mensaje.class));
+        // destinatarioId y contenido faltantes
 
         ResponseEntity<?> response = mensajeController.enviarMensaje(body);
 
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody().toString().contains("Los campos remitenteId, destinatarioId y contenido son requeridos"));
+    }
+
+    @Test
+    void obtenerHistorial_Exito() {
+        List<Mensaje> mockHistorial = List.of(
+                Mensaje.builder().id(1L).contenido("Hola").build()
+        );
+        when(mensajeService.obtenerHistorial(1L, 2L)).thenReturn(mockHistorial);
+
+        ResponseEntity<List<Mensaje>> response = mensajeController.obtenerHistorial(1L, 2L);
+
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(mensajeRepository, times(1)).save(any(Mensaje.class));
+        assertEquals(1, response.getBody().size());
+        assertEquals("Hola", response.getBody().get(0).getContenido());
+    }
+
+    @Test
+    void obtenerContactos_Exito() {
+        List<Map<String, Object>> mockContactos = List.of(
+                Map.of("id", 2L, "rol", "Apoderado", "correo", "apoderado@colegio.com")
+        );
+        when(mensajeService.obtenerContactos(1L)).thenReturn(mockContactos);
+
+        ResponseEntity<List<Map<String, Object>>> response = mensajeController.obtenerContactos(1L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+        assertEquals("apoderado@colegio.com", response.getBody().get(0).get("correo"));
+    }
+
+    @Test
+    void obtenerContactos_ServicioUsuariosCaido_DebeRetornarVacioConServiceUnavailable() {
+        when(mensajeService.obtenerContactos(1L))
+                .thenThrow(new UsuarioServicioNoDisponibleException("Servicio caído"));
+
+        ResponseEntity<List<Map<String, Object>>> response = mensajeController.obtenerContactos(1L);
+
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
+        assertTrue(response.getBody().isEmpty());
     }
 }

@@ -89,6 +89,9 @@ services:
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/reportes_db
       - SPRING_RABBITMQ_HOST=rabbitmq
+      - SERVICIO_ACADEMICO_URL=http://servicio-academico:8084
+      - SERVICIO_ASISTENCIA_URL=http://servicio-asistencia:8082
+      - SERVICIO_MATRICULA_URL=http://servicio-matricula:8083
     depends_on:
       - postgres-db
       - rabbitmq
@@ -115,6 +118,13 @@ services:
     container_name: apigateway
     ports:
       - "9090:9090"
+    environment:
+      - SERVICIO_USUARIOS_URL=http://servicio-usuarios:8081
+      - SERVICIO_ASISTENCIA_URL=http://servicio-asistencia:8082
+      - SERVICIO_MATRICULA_URL=http://servicio-matricula:8083
+      - SERVICIO_ACADEMICO_URL=http://servicio-academico:8084
+      - SERVICIO_REPORTES_URL=http://servicio-reportes:8085
+      - SERVICIO_MENSAJERIA_URL=http://servicio-mensajeria:8086
     networks:
       - colegio-network
 

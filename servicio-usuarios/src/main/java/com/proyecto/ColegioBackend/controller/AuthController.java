@@ -69,6 +69,10 @@ public class AuthController {
             // Encriptamos la contraseña antes de guardarla
             nuevoUsuario.setPassword(passwordEncoder.encode(password));
             nuevoUsuario.setRol(user.getOrDefault("rol", "Alumno")); // Usamos el rol de Postman, o Alumno por defecto
+            nuevoUsuario.setTelefono(user.get("telefono"));
+            if (user.get("cursoId") != null && !String.valueOf(user.get("cursoId")).trim().isEmpty()) {
+                nuevoUsuario.setCursoId(Long.valueOf(String.valueOf(user.get("cursoId"))));
+            }
             
             Usuario guardado = usuarioRepository.save(nuevoUsuario); // ¡Guardado directo!
             System.out.println("¡ÉXITO! Usuario guardado en BD con ID: " + guardado.getId());

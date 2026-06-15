@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/reportes/asistencias")
 @Tag(name = "Reportes de Asistencia", description = "Endpoints para reportes de asistencias")
 public class ReporteAsistenciaController {
