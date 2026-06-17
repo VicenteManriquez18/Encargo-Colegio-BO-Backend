@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/matricula")
-@CrossOrigin(origins = "http://localhost:5173") // Ajustar según seguridad
+@CrossOrigin(origins = "*") // Ajustar según seguridad
 public class EstudianteController {
 
     @Autowired
@@ -135,6 +135,56 @@ public class EstudianteController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Error al conectar con el servicio de usuarios: " + e.getMessage()));
         }
+    }
+
+    @PutMapping("/estudiantes/usuario/{usuarioId}")
+    public ResponseEntity<?> actualizarEstudiantePorUsuarioId(@PathVariable Long usuarioId, @RequestBody Map<String, Object> body) {
+        java.util.Optional<Estudiante> estudianteOpt = estudianteRepository.findByUsuarioId(usuarioId);
+        if (estudianteOpt.isPresent()) {
+            Estudiante estudiante = estudianteOpt.get();
+            if (body.containsKey("cursoId")) {
+                Object cId = body.get("cursoId");
+                estudiante.setCursoId(cId != null ? Long.valueOf(cId.toString()) : null);
+            }
+            if (body.containsKey("nombre")) {
+                estudiante.setNombre((String) body.get("nombre"));
+            }
+            if (body.containsKey("estado")) {
+                estudiante.setEstado((String) body.get("estado"));
+            }
+            if (estudiante.getApoderado() != null) {
+                if (body.containsKey("telefono")) {
+                    estudiante.getApoderado().setTelefono((String) body.get("telefono"));
+                }
+                if (body.containsKey("correo")) {
+                    estudiante.getApoderado().setCorreo((String) body.get("correo"));
+                }
+                apoderadoRepository.save(estudiante.getApoderado());
+            }
+            estudianteRepository.save(estudiante);
+            return ResponseEntity.ok(estudiante);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/estudiantes/usuario/{usuarioId}")
+    public ResponseEntity<?> eliminarEstudiantePorUsuarioId(@PathVariable Long usuarioId) {
+        java.util.Optional<Estudiante> estudianteOpt = estudianteRepository.findByUsuarioId(usuarioId);
+        if (estudianteOpt.isPresent()) {
+            estudianteRepository.delete(estudianteOpt.get());
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/apoderados/usuario/{usuarioId}")
+    public ResponseEntity<?> eliminarApoderadoPorUsuarioId(@PathVariable Long usuarioId) {
+        java.util.Optional<com.proyecto.ColegioBackend.model.Apoderado> apoderadoOpt = apoderadoRepository.findByUsuarioId(usuarioId);
+        if (apoderadoOpt.isPresent()) {
+            apoderadoRepository.delete(apoderadoOpt.get());
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 
     private Map<String, Object> parseToken(String authHeader) {

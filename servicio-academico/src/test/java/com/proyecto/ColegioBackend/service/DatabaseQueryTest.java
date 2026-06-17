@@ -16,6 +16,7 @@ class DatabaseQueryTest {
 
     @Test
     void inspectDatabaseAndTestInsert() {
+        org.junit.jupiter.api.Assertions.assertNotNull(jdbcTemplate, "JdbcTemplate should be injected and not null");
         System.out.println("==================================================");
         System.out.println("   DIAGNOSTIC TEST: ACADEMICO_DB DATABASE STATUS   ");
         System.out.println("==================================================");
@@ -81,7 +82,7 @@ class DatabaseQueryTest {
             );
             System.out.println("Columns:");
             for (Map<String, Object> col : cols) {
-                System.out.printf("  %s (%s, Nullable: %s)\n", col.get("column_name"), col.get("data_type"), col.get("is_nullable"));
+                System.out.printf("  %s (%s, Nullable: %s)%n", col.get("column_name"), col.get("data_type"), col.get("is_nullable"));
             }
 
             // Rows count

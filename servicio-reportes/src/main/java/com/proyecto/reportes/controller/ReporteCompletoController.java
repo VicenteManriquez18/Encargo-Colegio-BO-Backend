@@ -12,12 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/reportes/completo")
 @Tag(name = "Reportes Completos", description = "Endpoints para la obtención de reportes consolidados (notas, asistencia y comportamiento)")
 public class ReporteCompletoController {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReporteCompletoController.class);
+
+    private static final String ERROR_KEY = "error";
 
     @Autowired
     private ReporteCompletoService reporteCompletoService;
@@ -25,16 +26,20 @@ public class ReporteCompletoController {
     @Autowired
     private org.springframework.web.reactive.function.client.WebClient webClient;
 
+    @org.springframework.beans.factory.annotation.Value("${servicio.matricula.url}")
+    private String matriculaUrl;
+
     private boolean verificarVinculacionApoderado(Long alumnoId, Long apoderadoUsuarioId) {
         try {
-            String url = "http://127.0.0.1:8083/api/matricula/estudiantes/usuario/" + alumnoId;
-            java.util.Map response = webClient.get()
+            String url = matriculaUrl + "/api/matricula/estudiantes/usuario/" + alumnoId;
+            java.util.Map<String, Object> response = webClient.get()
                 .uri(url)
                 .retrieve()
-                .bodyToMono(java.util.Map.class)
+                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<java.util.Map<String, Object>>() {})
                 .block();
             if (response != null && response.containsKey("apoderado")) {
-                java.util.Map apoderado = (java.util.Map) response.get("apoderado");
+                @SuppressWarnings("unchecked")
+                java.util.Map<String, Object> apoderado = (java.util.Map<String, Object>) response.get("apoderado");
                 if (apoderado != null && apoderado.containsKey("usuarioId")) {
                     Long val = Long.valueOf(apoderado.get("usuarioId").toString());
                     return val.equals(apoderadoUsuarioId);
@@ -52,26 +57,26 @@ public class ReporteCompletoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Reporte consolidado obtenido con éxito")
     })
-    public ResponseEntity<?> obtenerReporteCompleto(
+    public ResponseEntity<Object> obtenerReporteCompleto(
             @PathVariable Long alumnoId,
             @RequestParam(value = "comportamiento", required = false, defaultValue = "true") boolean incluirComportamiento,
             @RequestHeader(value = "Authorization", required = false) String token) {
         
         java.util.Map<String, Object> claims = com.proyecto.reportes.config.JwtUtil.parseToken(token);
         if (claims == null || claims.get("rol") == null) {
-            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(java.util.Map.of("error", "No autorizado"));
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(java.util.Map.of(ERROR_KEY, "No autorizado"));
         }
         
         String rol = (String) claims.get("rol");
         Long requesterUserId = (Long) claims.get("id");
         
         if ("Alumno".equalsIgnoreCase(rol)) {
-            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(java.util.Map.of("error", "Los alumnos no pueden ver reportes"));
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(java.util.Map.of(ERROR_KEY, "Los alumnos no pueden ver reportes"));
         }
         
         if ("Apoderado".equalsIgnoreCase(rol)) {
             if (!verificarVinculacionApoderado(alumnoId, requesterUserId)) {
-                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(java.util.Map.of("error", "Acceso denegado: este alumno no está vinculado a su cuenta de apoderado"));
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(java.util.Map.of(ERROR_KEY, "Acceso denegado: este alumno no está vinculado a su cuenta de apoderado"));
             }
         }
 

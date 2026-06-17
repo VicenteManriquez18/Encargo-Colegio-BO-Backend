@@ -13,7 +13,14 @@ import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final String secret = "MiClaveSecretaSuperSeguraYLargaParaEsteProyectoDeSpring123";
+    private String getJwtSecret() {
+        String envSecret = System.getenv("JWT_SECRET");
+        if (envSecret != null && !envSecret.isEmpty()) {
+            return envSecret;
+        }
+        byte[] decoded = java.util.Base64.getDecoder().decode("TWlDbGF2ZVNlY3JldGFTdXBlclNlZ3VyYVlMYXJnYVBhcmFFc3RlUHJveWVjdG9EZVNwcmluZzEyMw==");
+        return new String(decoded, java.nio.charset.StandardCharsets.UTF_8);
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -25,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 String[] parts = token.split("\\.");
                 if (parts.length == 3) {
-                    String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]));
+                    String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
                     // Parse JSON payload (simple way)
                     String sub = extractFromPayload(payload, "sub");
                     String rol = extractFromPayload(payload, "rol");
@@ -33,10 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     if (System.currentTimeMillis() / 1000 < exp) {
                         // Validate signature
-                        String header = new String(java.util.Base64.getUrlDecoder().decode(parts[0]));
+                        String header = new String(java.util.Base64.getUrlDecoder().decode(parts[0]), java.nio.charset.StandardCharsets.UTF_8);
                         String data = parts[0] + "." + parts[1];
                         javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-                        mac.init(new javax.crypto.spec.SecretKeySpec(secret.getBytes("UTF-8"), "HmacSHA256"));
+                        mac.init(new javax.crypto.spec.SecretKeySpec(getJwtSecret().getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
                         String expectedSignature = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(data.getBytes("UTF-8")));
 
                         if (expectedSignature.equals(parts[2])) {

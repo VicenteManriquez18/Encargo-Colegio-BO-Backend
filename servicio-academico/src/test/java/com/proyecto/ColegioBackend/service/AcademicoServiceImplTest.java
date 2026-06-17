@@ -30,31 +30,22 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 @ExtendWith(MockitoExtension.class)
 public class AcademicoServiceImplTest {
-
     @Mock
     private CursoRepository cursoRepository;
-
     @Mock
     private MatriculaRepository matriculaRepository;
-
     @Mock
     private PruebaRepository pruebaRepository;
-
     @Mock
     private NotaRepository notaRepository;
-
     @Mock
     private com.proyecto.ColegioBackend.repository.CursoAsignaturaRepository cursoAsignaturaRepository;
-
     @Mock
     private RabbitTemplate rabbitTemplate;
-
     @Spy
     private NotaGeneradaEventFactory notaGeneradaEventFactory = new NotaGeneradaEventFactory();
-
     @InjectMocks
     private AcademicoServiceImpl academicoService;
-
     private Curso curso;
     private Matricula matricula;
     private Prueba prueba;
@@ -69,13 +60,11 @@ public class AcademicoServiceImplTest {
                 .descripcion("Primer Año A")
                 .profesorId(10L)
                 .build();
-
         matricula = Matricula.builder()
                 .id(1L)
                 .curso(curso)
                 .usuarioId(5L)
                 .build();
-
         prueba = Prueba.builder()
                 .id(1L)
                 .titulo("Control 1")
@@ -83,7 +72,6 @@ public class AcademicoServiceImplTest {
                 .fecha(LocalDate.now())
                 .curso(curso)
                 .build();
-
         nota = Nota.builder()
                 .id(1L)
                 .prueba(prueba)
@@ -116,7 +104,8 @@ public class AcademicoServiceImplTest {
     @Test
     void crearCurso_Exito() {
         when(cursoRepository.save(any(Curso.class))).thenReturn(curso);
-        when(cursoAsignaturaRepository.save(any(com.proyecto.ColegioBackend.model.CursoAsignatura.class))).thenReturn(null);
+        when(cursoAsignaturaRepository.save(any(com.proyecto.ColegioBackend.model.CursoAsignatura.class)))
+                .thenReturn(null);
         Curso nuevoCurso = Curso.builder().nombre("2 B").build();
         Curso resultado = academicoService.crearCurso(nuevoCurso);
         assertNotNull(resultado);

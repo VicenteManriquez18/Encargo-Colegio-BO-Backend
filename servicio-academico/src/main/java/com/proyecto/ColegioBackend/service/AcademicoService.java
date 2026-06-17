@@ -26,6 +26,7 @@ public interface AcademicoService {
     Matricula matricularAlumno(Long usuarioId, Long cursoId);
     List<Matricula> listarMatriculasPorCurso(Long cursoId);
     List<Matricula> listarMatriculasPorAlumno(Long usuarioId);
+    void eliminarMatriculasPorAlumno(Long usuarioId);
 
     // Pruebas
     Prueba crearPrueba(Long cursoId, Prueba prueba);

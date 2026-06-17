@@ -15,13 +15,14 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/reportes/asistencias")
 @Tag(name = "Reportes de Asistencia", description = "Endpoints para reportes de asistencias")
 public class ReporteAsistenciaController {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReporteAsistenciaController.class);
     
+    private static final String ALUMNO_ID_KEY = "alumno_id";
+
     @Autowired
     private ReporteAsistenciaService reporteAsistenciaService;
     
@@ -59,7 +60,7 @@ public class ReporteAsistenciaController {
         log.info("GET: Total de asistencias del alumno {}", alumnoId);
         Long total = reporteAsistenciaService.obtenerTotalAsistenciasAlumno(alumnoId);
         Map<String, Object> response = new HashMap<>();
-        response.put("alumno_id", alumnoId);
+        response.put(ALUMNO_ID_KEY, alumnoId);
         response.put("total_asistencias", total);
         return ResponseEntity.ok(response);
     }
@@ -74,7 +75,7 @@ public class ReporteAsistenciaController {
         log.info("GET: Total de inasistencias del alumno {}", alumnoId);
         Long total = reporteAsistenciaService.obtenerTotalInasistenciasAlumno(alumnoId);
         Map<String, Object> response = new HashMap<>();
-        response.put("alumno_id", alumnoId);
+        response.put(ALUMNO_ID_KEY, alumnoId);
         response.put("total_inasistencias", total);
         return ResponseEntity.ok(response);
     }
@@ -89,7 +90,7 @@ public class ReporteAsistenciaController {
         log.info("GET: Porcentaje de asistencia del alumno {}", alumnoId);
         Double porcentaje = reporteAsistenciaService.obtenerPorcentajeAsistenciaAlumno(alumnoId);
         Map<String, Object> response = new HashMap<>();
-        response.put("alumno_id", alumnoId);
+        response.put(ALUMNO_ID_KEY, alumnoId);
         response.put("porcentaje_asistencia", porcentaje);
         return ResponseEntity.ok(response);
     }

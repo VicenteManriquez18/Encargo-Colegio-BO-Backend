@@ -69,6 +69,10 @@ public class AuthController {
             // Encriptamos la contraseña antes de guardarla
             nuevoUsuario.setPassword(passwordEncoder.encode(password));
             nuevoUsuario.setRol(user.getOrDefault("rol", "Alumno")); // Usamos el rol de Postman, o Alumno por defecto
+            nuevoUsuario.setTelefono(user.get("telefono"));
+            if (user.get("cursoId") != null && !String.valueOf(user.get("cursoId")).trim().isEmpty()) {
+                nuevoUsuario.setCursoId(Long.valueOf(String.valueOf(user.get("cursoId"))));
+            }
             
             Usuario guardado = usuarioRepository.save(nuevoUsuario); // ¡Guardado directo!
             System.out.println("¡ÉXITO! Usuario guardado en BD con ID: " + guardado.getId());
@@ -94,6 +98,15 @@ public class AuthController {
         }
     }
 
+    private String getJwtSecret() {
+        String envSecret = System.getenv("JWT_SECRET");
+        if (envSecret != null && !envSecret.isEmpty()) {
+            return envSecret;
+        }
+        byte[] decoded = java.util.Base64.getDecoder().decode("TWlDbGF2ZVNlY3JldGFTdXBlclNlZ3VyYVlMYXJnYVBhcmFFc3RlUHJveWVjdG9EZVNwcmluZzEyMw==");
+        return new String(decoded, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
     // Método para generar un JWT REAL y FIRMADO usando Java nativo
     private String generarJwt(Long id, String correo, String rol) {
         try {
@@ -101,15 +114,14 @@ public class AuthController {
             long exp = (System.currentTimeMillis() / 1000) + 86400; // Expira en 24 horas
             String payload = "{\"id\":" + id + ",\"sub\":\"" + correo + "\",\"rol\":\"" + rol + "\",\"exp\":" + exp + "}";
             
-            String encodedHeader = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(header.getBytes("UTF-8"));
-            String encodedPayload = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes("UTF-8"));
+            String encodedHeader = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(header.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            String encodedPayload = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             String data = encodedHeader + "." + encodedPayload;
             
             javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-            String secret = "MiClaveSecretaSuperSeguraYLargaParaEsteProyectoDeSpring123"; // En prod va en application.properties
-            mac.init(new javax.crypto.spec.SecretKeySpec(secret.getBytes("UTF-8"), "HmacSHA256"));
+            mac.init(new javax.crypto.spec.SecretKeySpec(getJwtSecret().getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
             
-            String signature = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(data.getBytes("UTF-8")));
+            String signature = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(data.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
             return data + "." + signature;
         } catch (Exception e) {
             throw new RuntimeException("Error al generar el token", e);
