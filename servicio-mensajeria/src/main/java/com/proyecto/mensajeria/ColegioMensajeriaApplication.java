@@ -17,7 +17,7 @@ public class ColegioMensajeriaApplication {
     private static void crearBaseDeDatosSiNoExiste() {
         String jdbcUrl = "jdbc:postgresql://localhost:5432/postgres";
         String username = "postgres";
-        String password = "1234";
+        String password = System.getenv().getOrDefault("SPRING_DATASOURCE_PASSWORD", "1234");
         try {
             // Cargar clase del driver para evitar problemas en algunos entornos de ejecución
             Class.forName("org.postgresql.Driver");

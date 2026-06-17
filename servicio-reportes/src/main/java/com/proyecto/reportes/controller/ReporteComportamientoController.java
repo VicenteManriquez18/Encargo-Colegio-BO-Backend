@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/reportes/comportamiento")
 @Tag(name = "Reportes de Comportamiento", description = "Endpoints para la gestión de comportamiento y conducta escolar")
 public class ReporteComportamientoController {
@@ -28,9 +28,12 @@ public class ReporteComportamientoController {
     @Autowired
     private org.springframework.web.reactive.function.client.WebClient webClient;
 
+    @org.springframework.beans.factory.annotation.Value("${servicio.matricula.url}")
+    private String matriculaUrl;
+
     private boolean verificarVinculacionApoderado(Long alumnoId, Long apoderadoUsuarioId) {
         try {
-            String url = "http://127.0.0.1:8083/api/matricula/estudiantes/usuario/" + alumnoId;
+            String url = matriculaUrl + "/api/matricula/estudiantes/usuario/" + alumnoId;
             java.util.Map response = webClient.get()
                 .uri(url)
                 .retrieve()

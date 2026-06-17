@@ -25,6 +25,8 @@ import com.proyecto.ColegioBackend.factory.NotaGeneradaEventFactory;
 public class AcademicoServiceImpl implements AcademicoService {
 
     private static final Logger logger = LoggerFactory.getLogger(AcademicoServiceImpl.class);
+    
+    private static final String CURSO_NOT_FOUND_MSG = "Curso no encontrado con ID: ";
 
     @Autowired
     private CursoRepository cursoRepository;
@@ -46,29 +48,6 @@ public class AcademicoServiceImpl implements AcademicoService {
 
     @Autowired
     private NotaGeneradaEventFactory notaGeneradaEventFactory;
-
-    private String getCourseSuffix(String nombre) {
-        if (nombre == null) return "";
-        String normalized = nombre.toLowerCase();
-        if (normalized.contains("primero") || normalized.contains("1")) {
-            return " 1";
-        } else if (normalized.contains("segundo") || normalized.contains("2")) {
-            return " 2";
-        } else if (normalized.contains("tercero") || normalized.contains("3")) {
-            return " 3";
-        } else if (normalized.contains("cuarto") || normalized.contains("4")) {
-            return " 4";
-        } else if (normalized.contains("quinto") || normalized.contains("5")) {
-            return " 5";
-        } else if (normalized.contains("sexto") || normalized.contains("6")) {
-            return " 6";
-        } else if (normalized.contains("septimo") || normalized.contains("7")) {
-            return " 7";
-        } else if (normalized.contains("octavo") || normalized.contains("8")) {
-            return " 8";
-        }
-        return "";
-    }
 
     // ==================== CURSOS ====================
 
@@ -119,7 +98,7 @@ public class AcademicoServiceImpl implements AcademicoService {
     @Transactional
     public Curso asignarProfesor(Long cursoId, Long profesorId) {
         Curso curso = cursoRepository.findById(cursoId)
-                .orElseThrow(() -> new RuntimeException("Curso no encontrado con ID: " + cursoId));
+                .orElseThrow(() -> new RuntimeException(CURSO_NOT_FOUND_MSG + cursoId));
         curso.setProfesorId(profesorId);
         return cursoRepository.save(curso);
     }
@@ -202,7 +181,7 @@ public class AcademicoServiceImpl implements AcademicoService {
     public Matricula matricularAlumno(Long usuarioId, Long cursoId) {
         // Buscar el curso por ID
         Curso curso = cursoRepository.findById(cursoId)
-                .orElseThrow(() -> new RuntimeException("Curso no encontrado con ID: " + cursoId));
+                .orElseThrow(() -> new RuntimeException(CURSO_NOT_FOUND_MSG + cursoId));
 
         // Verificar si ya está matriculado en este curso
         Optional<Matricula> matriculaExistente = matriculaRepository.findByCursoIdAndUsuarioId(curso.getId(), usuarioId);
@@ -229,13 +208,22 @@ public class AcademicoServiceImpl implements AcademicoService {
         return matriculaRepository.findByUsuarioId(usuarioId);
     }
 
+    @Override
+    @Transactional
+    public void eliminarMatriculasPorAlumno(Long usuarioId) {
+        List<Matricula> matriculas = matriculaRepository.findByUsuarioId(usuarioId);
+        if (matriculas != null && !matriculas.isEmpty()) {
+            matriculaRepository.deleteAll(matriculas);
+        }
+    }
+
     // ==================== PRUEBAS ====================
 
     @Override
     @Transactional
     public Prueba crearPrueba(Long cursoId, Prueba prueba) {
         Curso curso = cursoRepository.findById(cursoId)
-                .orElseThrow(() -> new RuntimeException("Curso no encontrado con ID: " + cursoId));
+                .orElseThrow(() -> new RuntimeException(CURSO_NOT_FOUND_MSG + cursoId));
         prueba.setCurso(curso);
         return pruebaRepository.save(prueba);
     }

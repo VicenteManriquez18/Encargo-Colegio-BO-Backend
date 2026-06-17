@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,18 +17,22 @@ public class FallbackController {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FallbackController.class);
 
+    private static final String ERROR_KEY = "error";
+    private static final String SERVICE_KEY = "service";
+    private static final String STATUS_CODE_KEY = "status_code";
+
     @GetMapping("/usuarios")
     @Operation(summary = "Fallback - Servicio de Usuarios",
             description = "Se ejecuta cuando el servicio de usuarios no responde")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "503", description = "Servicio de usuarios no disponible")
     })
-    public ResponseEntity<?> fallbackUsuarios() {
+    public ResponseEntity<Map<String, Object>> fallbackUsuarios() {
         log.warn("Fallback: Servicio usuarios no responde");
         return ResponseEntity.status(503).body(Map.of(
-                "error", "El servicio de usuarios no responde (Gateway Fallback)",
-                "service", "usuarios",
-                "status_code", 503
+                ERROR_KEY, "El servicio de usuarios no responde (Gateway Fallback)",
+                SERVICE_KEY, "usuarios",
+                STATUS_CODE_KEY, 503
         ));
     }
 
@@ -39,12 +42,12 @@ public class FallbackController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "503", description = "Servicio de matrícula no disponible")
     })
-    public ResponseEntity<?> fallbackMatricula() {
+    public ResponseEntity<Map<String, Object>> fallbackMatricula() {
         log.warn("Fallback: Servicio matrícula no responde");
         return ResponseEntity.status(503).body(Map.of(
-                "error", "El servicio de matrícula no responde (Gateway Fallback)",
-                "service", "matricula",
-                "status_code", 503
+                ERROR_KEY, "El servicio de matrícula no responde (Gateway Fallback)",
+                SERVICE_KEY, "matricula",
+                STATUS_CODE_KEY, 503
         ));
     }
 
@@ -54,12 +57,12 @@ public class FallbackController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "503", description = "Servicio de asistencia no disponible")
     })
-    public ResponseEntity<?> fallbackAsistencia() {
+    public ResponseEntity<Map<String, Object>> fallbackAsistencia() {
         log.warn("Fallback: Servicio asistencia no responde");
         return ResponseEntity.status(503).body(Map.of(
-                "error", "El servicio de asistencia no responde (Gateway Fallback)",
-                "service", "asistencia",
-                "status_code", 503
+                ERROR_KEY, "El servicio de asistencia no responde (Gateway Fallback)",
+                SERVICE_KEY, "asistencia",
+                STATUS_CODE_KEY, 503
         ));
     }
 
@@ -69,12 +72,12 @@ public class FallbackController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "503", description = "Servicio académico no disponible")
     })
-    public ResponseEntity<?> fallbackAcademico() {
+    public ResponseEntity<Map<String, Object>> fallbackAcademico() {
         log.warn("Fallback: Servicio académico no responde");
         return ResponseEntity.status(503).body(Map.of(
-                "error", "El servicio académico no responde (Gateway Fallback)",
-                "service", "academico",
-                "status_code", 503
+                ERROR_KEY, "El servicio académico no responde (Gateway Fallback)",
+                SERVICE_KEY, "academico",
+                STATUS_CODE_KEY, 503
         ));
     }
 
@@ -84,12 +87,12 @@ public class FallbackController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "503", description = "Servicio de reportes no disponible")
     })
-    public ResponseEntity<?> fallbackReportes() {
+    public ResponseEntity<Map<String, Object>> fallbackReportes() {
         log.warn("Fallback: Servicio reportes no responde");
         return ResponseEntity.status(503).body(Map.of(
-                "error", "El servicio de reportes no responde (Gateway Fallback)",
-                "service", "reportes",
-                "status_code", 503
+                ERROR_KEY, "El servicio de reportes no responde (Gateway Fallback)",
+                SERVICE_KEY, "reportes",
+                STATUS_CODE_KEY, 503
         ));
     }
 
@@ -99,12 +102,12 @@ public class FallbackController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "503", description = "Servicio de mensajería no disponible")
     })
-    public ResponseEntity<?> fallbackMensajeria() {
+    public ResponseEntity<Map<String, Object>> fallbackMensajeria() {
         log.warn("Fallback: Servicio mensajería no responde");
         return ResponseEntity.status(503).body(Map.of(
-                "error", "El servicio de mensajería no responde (Gateway Fallback)",
-                "service", "mensajeria",
-                "status_code", 503
+                ERROR_KEY, "El servicio de mensajería no responde (Gateway Fallback)",
+                SERVICE_KEY, "mensajeria",
+                STATUS_CODE_KEY, 503
         ));
     }
 }

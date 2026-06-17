@@ -2,7 +2,6 @@ package com.proyecto.ColegioBackend.controller;
 
 import com.proyecto.ColegioBackend.model.Curso;
 import com.proyecto.ColegioBackend.service.AcademicoService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,11 +11,15 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/academico/cursos")
-@CrossOrigin(origins = "http://localhost:5173")
 public class CursoController {
 
-    @Autowired
-    private AcademicoService academicoService;
+    private final AcademicoService academicoService;
+
+    private static final String ERROR_KEY = "error";
+
+    public CursoController(AcademicoService academicoService) {
+        this.academicoService = academicoService;
+    }
 
     @GetMapping
     public ResponseEntity<List<Curso>> listarCursos() {
@@ -35,18 +38,18 @@ public class CursoController {
     }
 
     @PutMapping("/{id}/profesor")
-    public ResponseEntity<?> asignarProfesor(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<Object> asignarProfesor(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         try {
             Object profIdObj = body.get("profesorId");
             if (profIdObj == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "El campo profesorId es requerido"));
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "El campo profesorId es requerido"));
             }
             Long profesorId = Long.valueOf(profIdObj.toString());
             Curso curso = academicoService.asignarProfesor(id, profesorId);
             return ResponseEntity.ok(curso);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -56,29 +59,29 @@ public class CursoController {
     }
 
     @PutMapping("/{id}/asignaturas/profesor")
-    public ResponseEntity<?> asignarProfesorAsignatura(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<Object> asignarProfesorAsignatura(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         try {
             String asignatura = (String) body.get("asignatura");
             Object profIdObj = body.get("profesorId");
             if (asignatura == null || profIdObj == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Los campos 'asignatura' y 'profesorId' son requeridos"));
+                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Los campos 'asignatura' y 'profesorId' son requeridos"));
             }
             Long profesorId = Long.valueOf(profIdObj.toString());
             com.proyecto.ColegioBackend.model.CursoAsignatura ca = academicoService.asignarProfesorAsignatura(id, asignatura, profesorId);
             return ResponseEntity.ok(ca);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
     @GetMapping("/asignaciones")
-    public ResponseEntity<?> listarTodasAsignaciones() {
+    public ResponseEntity<List<com.proyecto.ColegioBackend.model.CursoAsignatura>> listarTodasAsignaciones() {
         return ResponseEntity.ok(academicoService.listarTodasAsignaciones());
     }
 
     @GetMapping("/asignaciones/profesor/{profesorId}")
-    public ResponseEntity<?> listarAsignacionesPorProfesor(@PathVariable Long profesorId) {
+    public ResponseEntity<List<com.proyecto.ColegioBackend.model.CursoAsignatura>> listarAsignacionesPorProfesor(@PathVariable Long profesorId) {
         return ResponseEntity.ok(academicoService.listarAsignacionesPorProfesor(profesorId));
     }
 }
